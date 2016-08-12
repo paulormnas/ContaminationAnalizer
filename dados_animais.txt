@@ -1,0 +1,9 @@
+nome	criterio de contaminacao	ocorrencia
+Barbeiro	100	1
+Coati	84.81	2
+Ocelot	30.00	3
+Crab-eating fox	38.09	4
+Feral pig	61.91	1
+Spear nosed bat	50	2
+Arboreal rice rat	34.41	3
+Punaré	8.45	4
