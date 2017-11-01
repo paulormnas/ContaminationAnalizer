@@ -23,7 +23,7 @@ class CMainWindow(Gtk.Window):
 		self.add_main_box()
 		self.add_navigation_bar()
 		self.add_horizontal_box()
-		# self.add_project_box()
+		self.add_project_box()
 		self.add_notebook(ctrl=ctrl)
 
 		# Buttons for test
@@ -90,6 +90,7 @@ class CMainWindow(Gtk.Window):
 		# allocation.width = 100
 		# listbox.set_allocation(allocation)
 		self.horizontal_box.pack_start(listbox, True, True, 0)
+
 
 
 		#Add a header to the Listbox
