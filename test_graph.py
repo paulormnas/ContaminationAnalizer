@@ -76,7 +76,7 @@ class CEnvironmentGraph():
         self.g.edge_properties["contaminationCriteria"] = eprop_criterion
 
     def get_graph(self):
-            v_pos = self.g.new_vertex_property("vector<int32_t>")
+            v_pos = self.g.new_vertex_property("vector<double>")
             for i in range(0,7,1):
                 x = randint(0, 400)
                 y = randint(0, 200)

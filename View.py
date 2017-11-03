@@ -19,11 +19,12 @@ class CMainWindow(Gtk.Window):
 		# Get screen size and resize the program window to fill the screen.
 		screen = self.get_screen()
 		self.set_default_size(screen.get_width(), screen.get_height())
+		self.connect("key-press-event", self.key_press_event)
 
 		self.add_main_box()
 		self.add_navigation_bar()
 		self.add_horizontal_box()
-		self.add_project_box()
+		self.add_project_view()
 		self.add_notebook(ctrl=ctrl)
 
 		# Buttons for test
@@ -81,7 +82,7 @@ class CMainWindow(Gtk.Window):
 		                              orientation=Gtk.Orientation.HORIZONTAL)
 		self.vert_box.pack_start(self.horizontal_box, True, True, 0)
 
-	def add_project_box(self):
+	def add_project_view(self):
 		# Add a Listbox that show the project structure
 		listbox = Gtk.ListBox()
 		listbox.set_selection_mode(Gtk.SelectionMode.MULTIPLE)
@@ -107,9 +108,10 @@ class CMainWindow(Gtk.Window):
 	def add_notebook(self, ctrl):
 
 		self.nb = Gtk.Notebook()
+
 		self.page_environment = Gtk.Overlay()
 		graph = ctrl.get_graph()
-		graph_widget = gtk_graph_draw.GraphWidgetWithBackImage(graph,
+		self.graph_widget = gtk_graph_draw.GraphWidgetWithBackImage(graph,
 		                                                       pos=graph.vertex_properties["position"],
 		                                                       vertex_size=80,
 		                                                       vertex_text=graph.vertex_properties["name"],
@@ -121,8 +123,9 @@ class CMainWindow(Gtk.Window):
 		                                                       bg_color=[1, 1, 1, 0],
 		                                                       bg_image="terrain.png") #Only .png files are accepted
 
-		self.page_environment.add_overlay(graph_widget)
+		self.page_environment.add_overlay(self.graph_widget)
 		# self.page_environment.add(Gtk.Label('Environment simulation page'))
+
 		self.nb.append_page(self.page_environment, Gtk.Label('Environment'))
 
 		self.page_plot = Gtk.Box()
@@ -133,3 +136,11 @@ class CMainWindow(Gtk.Window):
 		                    )
 
 		self.horizontal_box.add(self.nb)
+
+
+	def key_press_event(self, widget, event):
+		# Handle key press.
+
+		# If the page_environment is displayed than handle the event key inside graph_widget
+		if self.nb.get_current_page() == 0:
+			self.graph_widget.key_press_event(self.graph_widget, event=event)

@@ -345,6 +345,7 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
                         | Gdk.EventMask.KEY_RELEASE_MASK)
 
         self.set_property("can-focus", True)
+        self.connect("size_allocate", self.size_allocate)
         self.connect("draw", self.draw)
 
         try:
@@ -377,20 +378,26 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
         else:
             self.bg_image = None
 
+    def size_allocate(self, da, allocation):
+        self.widget_width = allocation.width
+        self.widget_height = allocation.height
+        self.widget_pos_x, self.widget_pos_y = Gtk.Widget.translate_coordinates(self,
+                                                                                Gtk.Widget.get_toplevel(self),
+                                                                                0,
+                                                                                0)
+
     def fit_bg_image(self):
         # Scale and translate the background matrix to fit the background image inside the GraphWidget
         self.bgmatrix = cairo.Matrix() # reset the Matrix
-        widget_height = self.get_allocated_height()
-        widget_width = self.get_allocated_width()
         img_height = self.bg_image.get_height()
         img_width = self.bg_image.get_width()
-        width_ratio = float(widget_width) / float(img_width)
-        height_ratio = float(widget_height) / float(img_height)
+        width_ratio = float(self.widget_width) / float(img_width)
+        height_ratio = float(self.widget_height) / float(img_height)
         scale_xy = min(width_ratio, height_ratio)
 
-        top = int((widget_height / 2) - (img_height * scale_xy / 2))
-        left = int((widget_width / 2) - (img_width * scale_xy / 2))
-        self.bgmatrix.translate(left, top)
+        top = int((self.widget_height / 2) - (img_height * scale_xy / 2))
+        left = int((self.widget_width / 2) - (img_width * scale_xy / 2))
+        self.bgmatrix.translate(left + self.widget_pos_x, top + self.widget_pos_y)
         self.bgmatrix.scale(scale_xy, scale_xy)
 
 
@@ -707,7 +714,8 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
 
     def pos_to_device(self, pos, dist=False, surface=False, cr=None):
         """Convert a position from the graph space to the widget space."""
-        ox, oy = self.get_window().get_position()
+        ox = self.widget_pos_x
+        oy = self.widget_pos_y
         if cr is None:
             cr = self.get_window().cairo_create()
             if surface:
@@ -722,7 +730,8 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
 
     def pos_from_device(self, pos, dist=False, surface=False, background=False, cr=None):
         """Convert a position from the widget space to the device space."""
-        ox, oy = self.get_window().get_position()
+        ox = self.widget_pos_x
+        oy = self.widget_pos_y
         if cr is None:
             cr = self.get_window().cairo_create()
             if surface:
@@ -755,7 +764,8 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
     def fit_to_window(self, ink=False, g=None):
         r"""Fit graph to window."""
         geometry = [self.get_allocated_width(), self.get_allocated_height()]
-        ox, oy = self.get_window().get_position()
+        ox = self.widget_pos_x
+        oy = self.widget_pos_y
         if g is None:
             g = self.g
         pos = g.own_property(self.pos)
