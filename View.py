@@ -26,7 +26,7 @@ class CMainWindow(Gtk.Window):
 		self.add_navigation_bar()
 		self.add_horizontal_pane()
 		self.add_project_view()
-		self.add_notebook(ctrl=ctrl)
+		self.add_notebook()
 
 		# Buttons for test
 
@@ -149,7 +149,7 @@ class CMainWindow(Gtk.Window):
 		item_box.pack_start(item_label, False, False, 0)
 		return item_box
 
-	def add_notebook(self, ctrl):
+	def add_notebook(self):
 
 		self.nb = Gtk.Notebook()
 
