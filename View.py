@@ -12,14 +12,14 @@ class CMainWindow(Gtk.Window):
 
 	def __init__(self):
 		# Start the controller
-		ctrl = Control.CController()
-		self.graph = ctrl.get_graph()
+		self.ctrl = Control.CController()
+		self.graph = self.ctrl.get_graph()
 
 		# Program main window.
 		Gtk.Window.__init__(self, title="Hello World!")
 		# Get screen size and resize the program window to fill the screen.
-		screen = self.get_screen()
-		self.set_default_size(screen.get_width(), screen.get_height())
+		self.screen = self.get_screen()
+		self.set_default_size(self.screen.get_width(), self.screen.get_height())
 		self.connect("key-press-event", self.key_press_event)
 
 		self.add_main_box()
@@ -31,15 +31,15 @@ class CMainWindow(Gtk.Window):
 		# Buttons for test
 
 		self.button1 = Gtk.Button(label="Click Here")
-		self.button1.connect("clicked", ctrl.on_button_clicked)
+		self.button1.connect("clicked", self.ctrl.on_button_clicked)
 		self.vert_box.pack_start(self.button1, False, False, 0)
 
 		self.button2 = Gtk.Button(label="Click Here Too")
-		self.button2.connect("clicked", ctrl.print_debug)
+		self.button2.connect("clicked", self.ctrl.print_debug)
 		self.vert_box.pack_start(self.button2, False, False, 0)
 
-		self.button3 = Gtk.Button(label="Click Here Too")
-		self.button3.connect("clicked", self.print_debug)
+		self.button3 = Gtk.Button(label="Revert Edge")
+		self.button3.connect("clicked", self.step_forward)
 		self.vert_box.pack_start(self.button3, False, False, 0)
 
 	def print_debug(self, widget):
@@ -162,7 +162,7 @@ class CMainWindow(Gtk.Window):
 		                                                       vertex_text_position=-5,
 		                                                       vertex_font_size=12,
 		                                                       edge_pen_width=self.graph.edge_properties["contaminationCriteria"],
-		                                                       geometry=(1440, 1024),
+		                                                       geometry=(self.screen.get_width, self.screen.get_height),
 		                                                       edge_marker_size=30,
 		                                                       bg_color=[1, 1, 1, 0],
 		                                                       bg_image="terrain.png") #Only .png files are accepted
@@ -187,3 +187,9 @@ class CMainWindow(Gtk.Window):
 		# If the page_environment is displayed than handle the event key inside graph_widget
 		if self.nb.get_current_page() == 0:
 			self.graph_widget.key_press_event(self.graph_widget, event=event)
+
+	def step_forward(self, widget):
+		# Execute one step forward in SER simulation
+		self.graph = self.ctrl.step_forward(self.graph)
+		self.graph_widget.regenerate_surface(reset=True)
+		self.graph_widget.queue_draw()
