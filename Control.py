@@ -25,5 +25,8 @@ class CController():
 	def get_graph(self):
 		return self.env_graph.get_graph()
 
+	def step_backward(self, graph):
+		return self.ser.run(g=graph, is_forward=False)
+
 	def step_forward(self, graph):
-		return self.ser.run(g=graph)
+		return self.ser.run(g=graph, is_forward=True)

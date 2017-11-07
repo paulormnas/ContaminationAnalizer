@@ -16,7 +16,7 @@ class CMainWindow(Gtk.Window):
 		self.graph = self.ctrl.get_graph()
 
 		# Program main window.
-		Gtk.Window.__init__(self, title="Hello World!")
+		Gtk.Window.__init__(self, title="ERAAC")
 		# Get screen size and resize the program window to fill the screen.
 		self.screen = self.get_screen()
 		self.set_default_size(self.screen.get_width(), self.screen.get_height())
@@ -38,10 +38,6 @@ class CMainWindow(Gtk.Window):
 		self.button2.connect("clicked", self.ctrl.print_debug)
 		self.vert_box.pack_start(self.button2, False, False, 0)
 
-		self.button3 = Gtk.Button(label="Revert Edge")
-		self.button3.connect("clicked", self.step_forward)
-		self.vert_box.pack_start(self.button3, False, False, 0)
-
 	def print_debug(self, widget):
 		print(self.vert_box.props.orientation)
 
@@ -61,16 +57,19 @@ class CMainWindow(Gtk.Window):
 		button.add(image)
 		self.navbar.pack_end(button)
 
-		# A Box container that is set inside the NavigationBar to handle the buttons
+		# A Box container that is set inside the NavigationBar to handle the buttons that controls the simulation
+		# iterations
 		hb_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
 		Gtk.StyleContext.add_class(hb_box.get_style_context(), "linked")
 
 		button = Gtk.Button()
-		button.add(Gtk.Arrow(Gtk.ArrowType.LEFT, Gtk.ShadowType.NONE))
+		button.add(Gtk.Image.new_from_file("icons/step_backward.png"))
+		button.connect("clicked", self.step_backward)
 		hb_box.add(button)
 
 		button = Gtk.Button()
-		button.add(Gtk.Arrow(Gtk.ArrowType.RIGHT, Gtk.ShadowType.NONE))
+		button.add(Gtk.Image.new_from_file("icons/step_forward.png"))
+		button.connect("clicked", self.step_forward)
 		hb_box.add(button)
 
 		self.navbar.pack_start(hb_box)
@@ -187,6 +186,12 @@ class CMainWindow(Gtk.Window):
 		# If the page_environment is displayed than handle the event key inside graph_widget
 		if self.nb.get_current_page() == 0:
 			self.graph_widget.key_press_event(self.graph_widget, event=event)
+
+	def step_backward(self, widget):
+		# Execute one step forward in SER simulation
+		self.graph = self.ctrl.step_backward(self.graph)
+		self.graph_widget.regenerate_surface(reset=True)
+		self.graph_widget.queue_draw()
 
 	def step_forward(self, widget):
 		# Execute one step forward in SER simulation

@@ -1,34 +1,62 @@
 # coding=utf-8
 from graph_tool.all import *
-import Control
 
 class CSER:
 	# This class is responsible for implement the Scheduling by Edge Reversal algorithm and control the simulation.
 	def __init__(self):
 		self.sinks = []
+		self.iterations = 0
 
-	def revertEdge(self, graph):
-		# Revert all edges of all vertices that are sinks in this moment
-		for sink in self.sinks:
-			v = graph.vertex(sink)
-			for old_edge in v.all_edges():
-				new_edge = graph.add_edge(old_edge.target(), old_edge.source())
-				eprop_criterio = graph.edge_properties["contaminationCriteria"]
-				eprop_criterio[(new_edge.source(), new_edge.target())] = eprop_criterio[(old_edge.source(), old_edge.target())]
-				graph.edge_properties["contaminationCriteria"] = eprop_criterio
-				graph.remove_edge(old_edge)
-		self.sinks = []
+	def run(self, g, is_forward):
+		# Verify if is a step forward or backward and revert the edges accordingly to each movement
+		if is_forward:
+			self.concurrency_measure(g)
+			self.iterations += 1
+		elif self.iterations > 0:
+			self.identify_last_sink(g)
+			self.iterations -= 1
 
-	def concurrencyMeasure(self, graph):
+		# print("Sinks: ", self.sinks)
+		# print(self.iterations)
+		self.revert_edge(g, is_forward=is_forward)
+		return g
+
+	def concurrency_measure(self, graph):
 		# Identify the vertices that are sink in this moment and create a list with they indexes.
 		concurrency = 0
 		for v in graph.vertices():
 			if (v.in_degree() > 0) and (v.out_degree() == 0):
 				self.sinks.append(graph.vertex_index[v])
-				concurrency = concurrency + 1
+				concurrency += 1
+
+	def identify_last_sink(self, graph):
+		# Identify the vertices that operated in the last iteration and create a list with they indexes.
+		last_sink = 0
+		for v in graph.vertices():
+			if (v.out_degree() > 0) and (v.in_degree() == 0):
+				self.sinks.append(graph.vertex_index[v])
+				last_sink += 1
 
 
-	def run(self, g):
-		self.concurrencyMeasure(g)
-		self.revertEdge(g)
-		return g
+	def revert_edge(self, graph, is_forward):
+		# Revert all edges of all vertices in self.sinks list, regarding as a step forward or backward
+		for sink in self.sinks:
+			if is_forward:
+				neighbors_list = graph.get_in_neighbors(sink)
+			else:
+				neighbors_list = graph.get_out_neighbors(sink)
+
+			for neighbor in neighbors_list:
+				if is_forward:
+					old_edge = graph.edge(neighbor, sink)
+					new_edge = graph.add_edge(sink, neighbor)
+				else:
+					old_edge = graph.edge(sink, neighbor)
+					new_edge = graph.add_edge(neighbor, sink)
+
+				eprop_criterio = graph.edge_properties["contaminationCriteria"]
+				eprop_criterio[(new_edge.source(), new_edge.target())] = eprop_criterio[(old_edge.source(), old_edge.target())]
+				graph.edge_properties["contaminationCriteria"] = eprop_criterio
+				graph.remove_edge(old_edge)
+
+		self.sinks = []
