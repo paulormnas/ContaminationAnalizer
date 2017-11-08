@@ -7,18 +7,25 @@ class CSER:
 		self.sinks = []
 		self.iterations = 0
 
+	def get_iterations_number(self):
+		return self.iterations
+
 	def run(self, g, is_forward):
-		# Verify if is a step forward or backward and revert the edges accordingly to each movement
+		# Verify if is a forward or backward step and revert the edges accordingly to each movement
 		if is_forward:
 			self.concurrency_measure(g)
 			self.iterations += 1
 		elif self.iterations > 0:
-			self.identify_last_sink(g)
+			self.identify_last_sinks(g)
 			self.iterations -= 1
 
-		# print("Sinks: ", self.sinks)
-		# print(self.iterations)
 		self.revert_edge(g, is_forward=is_forward)
+		return g
+
+	def reset(self, g):
+		# Runs the SER algorithm backwards until it reaches the initial state
+		while self.iterations:
+			g = self.run(g=g, is_forward=False)
 		return g
 
 	def concurrency_measure(self, graph):
@@ -29,7 +36,7 @@ class CSER:
 				self.sinks.append(graph.vertex_index[v])
 				concurrency += 1
 
-	def identify_last_sink(self, graph):
+	def identify_last_sinks(self, graph):
 		# Identify the vertices that operated in the last iteration and create a list with they indexes.
 		last_sink = 0
 		for v in graph.vertices():

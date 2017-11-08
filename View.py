@@ -1,22 +1,27 @@
 # coding=utf-8
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, Gio, Gdk
+from gi.repository import Gtk, Gio, Gdk, GObject
 from graph_tool.all import *
 
-import Control, gtk_graph_draw
+import Control
+import gtk_graph_draw
+import threading
+import time
 
 class CMainWindow(Gtk.Window):
-# This class is used to create the main window of the application. All the containers, box and buttons
-# are instaciated here. The main window is composed by a HeaderBar, which is called NavigationBar,
+# This class is responsable for create the main window of the application. All the containers, box and buttons
+# are instaciated here.
 
 	def __init__(self):
 		# Start the controller
 		self.ctrl = Control.CController()
 		self.graph = self.ctrl.get_graph()
 
+		self.is_running = False # Attribute to control thread activity
+
 		# Program main window.
-		Gtk.Window.__init__(self, title="ERAAC")
+		Gtk.Window.__init__(self, title="ERAAC") # ERAAC - Escalonamento por Reversão de Arestas para Análise de Contaminação
 		# Get screen size and resize the program window to fill the screen.
 		self.screen = self.get_screen()
 		self.set_default_size(self.screen.get_width(), self.screen.get_height())
@@ -27,19 +32,7 @@ class CMainWindow(Gtk.Window):
 		self.add_horizontal_pane()
 		self.add_project_view()
 		self.add_notebook()
-
-		# Buttons for test
-
-		self.button1 = Gtk.Button(label="Click Here")
-		self.button1.connect("clicked", self.ctrl.on_button_clicked)
-		self.vert_box.pack_start(self.button1, False, False, 0)
-
-		self.button2 = Gtk.Button(label="Click Here Too")
-		self.button2.connect("clicked", self.ctrl.print_debug)
-		self.vert_box.pack_start(self.button2, False, False, 0)
-
-	def print_debug(self, widget):
-		print(self.vert_box.props.orientation)
+		self.add_statusbar()
 
 	def add_main_box(self):
 		# First Box container in vertical orientation that hold the HeaderBar and the following layout containers
@@ -49,30 +42,62 @@ class CMainWindow(Gtk.Window):
 
 	def add_navigation_bar(self):
 		# Add the navigation bar that show the buttons responsible by control the ERA engine.
-		self.navbar = Gtk.HeaderBar(title="Header Bar Example")
-
-		button = Gtk.Button()
-		icon = Gio.ThemedIcon(name="mail-send-receive-symbolic")
-		image = Gtk.Image.new_from_gicon(icon, Gtk.IconSize.BUTTON)
-		button.add(image)
-		self.navbar.pack_end(button)
+		self.navbar = Gtk.HeaderBar()
 
 		# A Box container that is set inside the NavigationBar to handle the buttons that controls the simulation
 		# iterations
-		hb_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-		Gtk.StyleContext.add_class(hb_box.get_style_context(), "linked")
+		btn_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, homogeneous=True)
+		Gtk.StyleContext.add_class(btn_box.get_style_context(), "linked")
 
 		button = Gtk.Button()
-		button.add(Gtk.Image.new_from_file("icons/step_backward.png"))
+		button.set_image(Gtk.Image.new_from_file("icons/step_backward.png"))
 		button.connect("clicked", self.step_backward)
-		hb_box.add(button)
+		btn_box.add(button)
 
 		button = Gtk.Button()
-		button.add(Gtk.Image.new_from_file("icons/step_forward.png"))
+		button.set_image(Gtk.Image.new_from_file("icons/step_forward.png"))
 		button.connect("clicked", self.step_forward)
-		hb_box.add(button)
+		btn_box.add(button)
 
+		self.run_and_stop_btn = Gtk.Button()
+		self.run_and_stop_btn.set_image(Gtk.Image.new_from_file("icons/run.png"))
+		self.run_and_stop_btn.connect("clicked", self.run_continuously)
+		btn_box.add(self.run_and_stop_btn)
+
+		button = Gtk.Button()
+		button.set_image(Gtk.Image.new_from_file("icons/reset.png"))
+		button.connect("clicked", self.reset)
+		btn_box.add(button)
+
+
+		# Add a scale to adjust the speed of SER simulation
+		adj = Gtk.Adjustment()
+		adj.set_lower(1)
+		adj.set_upper(100)
+		adj.set_step_increment(2)
+		adj.set_page_increment(10)
+		self.scale = Gtk.Scale(orientation='GTK_ORIENTATION_HORIZONTAL', adjustment=adj)#
+		self.scale.set_draw_value(False)
+		self.scale.set_value(40)
+		self.scale.set_hexpand(True)
+
+		# Add icon to scale
+		scl_img = Gtk.Image.new_from_file("icons/speed.png")
+
+		# New box to handle the scale and it's icon
+		scl_box = Gtk.Box(orientation='GTK_ORIENTATION_HORIZONTAL', homogeneous=False)
+		scl_box.pack_start(scl_img, False, False, 0)
+		scl_box.pack_start(self.scale, True, True, 0)
+
+		# New box to handle the button's box and scale's box
+		hb_box = Gtk.Box(orientation='GTK_ORIENTATION_HORIZONTAL', homogeneous=True, spacing=50)
+		hb_box.add(btn_box)
+		hb_box.pack_start(scl_box, True, True, 0)
+
+		# Pack the boxes into Navigation Bar
 		self.navbar.pack_start(hb_box)
+
+		# Pack the Navigation Bar at the start of the main vertical box
 		self.vert_box.pack_start(self.navbar, False, False, 0)
 
 	def add_horizontal_pane(self):
@@ -96,11 +121,6 @@ class CMainWindow(Gtk.Window):
 		image = Gtk.Image.new_from_gicon(icon, Gtk.IconSize.BUTTON)
 		button.add(image)
 		hb.pack_end(button, False, True, 0)
-		allocation = Gdk.Rectangle(x=0,
-		                           y=0,
-		                           width=self.project_view_box.get_allocated_width(),
-		                           heihgt=15)
-		hb.size_allocate(allocation)
 		self.project_view_box.pack_start(hb, False, True, 0)
 
 		# A Box container that is set inside the NavigationBar to handle the buttons
@@ -179,6 +199,12 @@ class CMainWindow(Gtk.Window):
 
 		self.horizontal_pane.add2(self.nb)
 
+	def add_statusbar(self):
+		# Add a status bar on the bottom of the window.
+		self.sb = Gtk.Statusbar()
+		self.context_id = self.sb.get_context_id("__iteration__")
+		self.vert_box.pack_end(self.sb, False, False, 0)
+
 
 	def key_press_event(self, widget, event):
 		# Handle key press.
@@ -187,14 +213,46 @@ class CMainWindow(Gtk.Window):
 		if self.nb.get_current_page() == 0:
 			self.graph_widget.key_press_event(self.graph_widget, event=event)
 
-	def step_backward(self, widget):
-		# Execute one step forward in SER simulation
-		self.graph = self.ctrl.step_backward(self.graph)
+	def redraw(self):
+		# Redraw the graph in environment page and show the number of iterations executed by the SER simulation
 		self.graph_widget.regenerate_surface(reset=True)
 		self.graph_widget.queue_draw()
+		self.sb.push(self.context_id,
+		             "Iteration: " + str(self.ctrl.get_iterations()) + "   " +
+		             "Speed: " + str(round(self.scale.get_value(), 0)) + "%   ")
+
+	def step_backward(self, widget):
+		# Execute one step backward in SER simulation
+		if not self.is_running:
+			self.graph = self.ctrl.step_backward(self.graph)
+			self.redraw()
 
 	def step_forward(self, widget):
 		# Execute one step forward in SER simulation
-		self.graph = self.ctrl.step_forward(self.graph)
-		self.graph_widget.regenerate_surface(reset=True)
-		self.graph_widget.queue_draw()
+		if not self.is_running:
+			self.graph = self.ctrl.step_forward(self.graph)
+			self.redraw()
+
+	def run_continuously(self, widget):
+		# Start a thread to run step forward continuously
+		if not self.is_running:
+			self.is_running = True
+			t = threading.Thread(target=self.threaded_step_forward)
+			t.start()
+			self.run_and_stop_btn.set_image(Gtk.Image.new_from_file("icons/stop.png"))
+		else:
+			self.is_running = False
+			self.run_and_stop_btn.set_image(Gtk.Image.new_from_file("icons/run.png"))
+
+	def threaded_step_forward(self):
+		# Execute step forward continuously in SER simulation inside a thread
+		while self.is_running:
+			self.graph = self.ctrl.step_forward(self.graph)
+			GObject.idle_add(self.redraw)
+			time.sleep(3 / self.scale.get_value())
+
+	def reset(self, widget):
+		# Reset the SER simulation
+		if not self.is_running:
+			self.graph = self.ctrl.reset(self.graph)
+			self.redraw()
