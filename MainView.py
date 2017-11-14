@@ -5,6 +5,7 @@ from gi.repository import Gtk, Gio, Gdk, GObject
 from graph_tool.all import *
 
 import Control
+import NewProjView
 import gtk_graph_draw
 import threading
 import time
@@ -23,6 +24,7 @@ class CMainWindow(Gtk.Window):
 		# Program main window.
 		Gtk.Window.__init__(self, title="ERAAC") # ERAAC - Escalonamento por Reversão de Arestas para Análise de Contaminação
 		# Get screen size and resize the program window to fill the screen.
+		self.set_icon_from_file("icons/vertex.png")
 		self.screen = self.get_screen()
 		self.set_default_size(self.screen.get_width(), self.screen.get_height())
 		self.connect("key-press-event", self.key_press_event)
@@ -51,7 +53,7 @@ class CMainWindow(Gtk.Window):
 
 		button = Gtk.Button()
 		button.set_image(Gtk.Image.new_from_file("icons/step_backward.png"))
-		button.connect("clicked", self.step_backward)
+		button.connect("clicked", self.update_species)
 		btn_box.add(button)
 
 		button = Gtk.Button()
@@ -256,3 +258,8 @@ class CMainWindow(Gtk.Window):
 		if not self.is_running:
 			self.graph = self.ctrl.reset(self.graph)
 			self.redraw()
+
+	def update_species(self, widget):
+		# Open new window to edit species properties
+		win = NewProjView.CUpdateSpecies()
+		win.show_all()
