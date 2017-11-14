@@ -385,20 +385,27 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
                                                                                 Gtk.Widget.get_toplevel(self),
                                                                                 0,
                                                                                 0)
+        if self.background is not None and self.bg_image is not None:
+            self.img_height = self.bg_image.get_height()
+            self.img_width = self.bg_image.get_width()
+            width_ratio = float(self.widget_width) / float(self.img_width)
+            height_ratio = float(self.widget_height) / float(self.img_height)
+            self.scale_xy = min(width_ratio, height_ratio)
+
+            self.top = int((self.widget_height / 2) - (self.img_height * self.scale_xy / 2))
+            self.left = int((self.widget_width / 2) - (self.img_width * self.scale_xy / 2))
+        else:
+            self.img_height = self.widget_height
+            self.img_width = self.widget_width
+            self.scale_xy = 1
+            self.top = 0
+            self.left = 0
 
     def fit_bg_image(self):
         # Scale and translate the background matrix to fit the background image inside the GraphWidget
         self.bgmatrix = cairo.Matrix() # reset the Matrix
-        img_height = self.bg_image.get_height()
-        img_width = self.bg_image.get_width()
-        width_ratio = float(self.widget_width) / float(img_width)
-        height_ratio = float(self.widget_height) / float(img_height)
-        scale_xy = min(width_ratio, height_ratio)
-
-        top = int((self.widget_height / 2) - (img_height * scale_xy / 2))
-        left = int((self.widget_width / 2) - (img_width * scale_xy / 2))
-        self.bgmatrix.translate(left + self.widget_pos_x, top + self.widget_pos_y)
-        self.bgmatrix.scale(scale_xy, scale_xy)
+        self.bgmatrix.translate(self.left + self.widget_pos_x, self.top + self.widget_pos_y)
+        self.bgmatrix.scale(self.scale_xy, self.scale_xy)
 
 
     def cleanup(self):
@@ -463,8 +470,8 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
                     if self.vertex_matrix is not None:
                         self.vertex_matrix = VertexMatrix(self.g, self.pos)
                     self.epsilon = 0.05 * self.layout_K * self.g.num_edges()
-                    geometry = [self.get_allocated_width(),
-                                self.get_allocated_height()]
+                    geometry = [self.img_width,
+                                self.img_height]
                     adjust_default_sizes(self.g, geometry, self.vprops,
                                          self.eprops, force=True)
                     self.fit_to_window(ink=False)
@@ -495,8 +502,8 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
             self.regenerate_generator = None
             self.regen_context = None
 
-        geometry = [self.get_allocated_width() * 3,
-                    self.get_allocated_height() * 3]
+        geometry = [self.img_width * 3,
+                    self.img_height * 3]
 
         if (self.base is None or self.base_geometry[0] != geometry[0] or
             self.base_geometry[1] != geometry[1] or reset):
@@ -512,13 +519,13 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
             self.base_geometry = geometry
 
             m = cairo.Matrix()
-            m.translate(self.get_allocated_width(),
-                        self.get_allocated_height())
+            m.translate(self.img_width,
+                        self.img_height)
             self.smatrix = self.smatrix.multiply(m)
             self.tmatrix = self.tmatrix.multiply(self.smatrix)
             self.smatrix = cairo.Matrix()
-            self.smatrix.translate(-self.get_allocated_width(),
-                                   -self.get_allocated_height())
+            self.smatrix.translate(-self.img_width,
+                                   -self.img_height)
 
         if self.regenerate_generator is None:
             cr = cairo.Context(self.base)
@@ -544,8 +551,8 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
     def draw(self, da, cr):
         r"""Redraw the widget."""
 
-        geometry = [self.get_allocated_width(),
-                    self.get_allocated_height()]
+        geometry = [self.img_width,
+                    self.img_height]
 
         if self.geometry is None:
             adjust_default_sizes(self.g, geometry, self.vprops, self.eprops)
@@ -692,8 +699,8 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
             else:
                 txt = ", ".join([str(x[self.picked])
                                  for x in self.display_prop])
-            geometry = [self.get_allocated_width(),
-                        self.get_allocated_height()]
+            geometry = [self.img_width,
+                        self.img_height]
             pos = [10, geometry[1] - 10]
             cr.set_font_size(self.display_prop_size)
             ext = cr.text_extents(txt)
@@ -762,10 +769,10 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
         self.queue_draw()
 
     def fit_to_window(self, ink=False, g=None):
-        r"""Fit graph to window."""
-        geometry = [self.get_allocated_width(), self.get_allocated_height()]
-        ox = self.widget_pos_x
-        oy = self.widget_pos_y
+        r"""Fit graph to image, if there is a background image, otherwise fit the graph to window."""
+        geometry = [self.img_width, self.img_height]
+        ox = self.left + self.widget_pos_x
+        oy = self.top + self.widget_pos_y
         if g is None:
             g = self.g
         pos = g.own_property(self.pos)
