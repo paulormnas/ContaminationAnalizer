@@ -44,16 +44,25 @@ class CMainWindow(Gtk.Window):
 
 	def add_navigation_bar(self):
 		# Add the navigation bar that show the buttons responsible by control the ERA engine.
-		self.navbar = Gtk.HeaderBar()
+		self.navbar = Gtk.HeaderBar(spacing=50)
 
-		# A Box container that is set inside the NavigationBar to handle the buttons that controls the simulation
+		# A box container to handle the buttons that allow configure the project properties
+		config_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, homogeneous=True)
+		Gtk.StyleContext.add_class(config_box.get_style_context(), "linked")
+
+		button = Gtk.Button()
+		button.set_image(Gtk.Image.new_from_file("icons/species.png"))
+		button.connect("clicked", self.update_species)
+		config_box.add(button)
+
+		# A Box container that is set inside the NavigationBar to handle the buttons that controls the simulator
 		# iterations
 		btn_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, homogeneous=True)
 		Gtk.StyleContext.add_class(btn_box.get_style_context(), "linked")
 
 		button = Gtk.Button()
 		button.set_image(Gtk.Image.new_from_file("icons/step_backward.png"))
-		button.connect("clicked", self.update_species)
+		button.connect("clicked", self.step_backward)
 		btn_box.add(button)
 
 		button = Gtk.Button()
@@ -91,13 +100,18 @@ class CMainWindow(Gtk.Window):
 		scl_box.pack_start(scl_img, False, False, 0)
 		scl_box.pack_start(self.scale, True, True, 0)
 
-		# New box to handle the button's box and scale's box
-		hb_box = Gtk.Box(orientation='GTK_ORIENTATION_HORIZONTAL', homogeneous=True, spacing=50)
-		hb_box.add(btn_box)
-		hb_box.pack_start(scl_box, True, True, 0)
+		# New box to handle the button's box and scale's box and add space between then
+		hb_box_sim = Gtk.Box(orientation='GTK_ORIENTATION_HORIZONTAL', homogeneous=True, spacing=20)
+		hb_box_sim.pack_start(btn_box, True, False, 0)
+		hb_box_sim.pack_start(scl_box, True, True, 0)
+
+		# New box to handle the configuration buttons and separete then from the buttons that controls the simulation
+		hb_box_config = Gtk.Box(orientation='GTK_ORIENTATION_HORIZONTAL', homogeneous=True, spacing=20)
+		hb_box_config.add(config_box)
 
 		# Pack the boxes into Navigation Bar
-		self.navbar.pack_start(hb_box)
+		self.navbar.pack_start(hb_box_config)
+		self.navbar.pack_start(hb_box_sim)
 
 		# Pack the Navigation Bar at the start of the main vertical box
 		self.vert_box.pack_start(self.navbar, False, False, 0)
@@ -263,3 +277,4 @@ class CMainWindow(Gtk.Window):
 		# Open new window to edit species properties
 		win = NewProjView.CUpdateSpecies()
 		win.show_all()
+		win.set_keep_above(True)
