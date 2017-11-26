@@ -5,17 +5,18 @@ from gi.repository import Gtk, Gio, Gdk, GObject
 from graph_tool.all import *
 
 import Control
-import NewProjView
+import UpdateSpecies
+import UpdateConnections
 import gtk_graph_draw
 import threading
 import time
 
 class CMainWindow(Gtk.Window):
-# This class is responsable for create the main window of the application. All the containers, box and buttons
-# are instaciated here.
+	"""This class is responsable for create the main window of the application. All the containers, box and buttons
+	are instaciated here."""
 
 	def __init__(self):
-		# Start the controller
+		"""Start the controller and instantiate all the components of the Main Window"""
 		self.ctrl = Control.CController()
 		self.graph = self.ctrl.get_graph()
 
@@ -37,13 +38,13 @@ class CMainWindow(Gtk.Window):
 		self.add_statusbar()
 
 	def add_main_box(self):
-		# First Box container in vertical orientation that hold the HeaderBar and the following layout containers
+		"""First Box container in vertical orientation that hold the HeaderBar and the following layout containers"""
 		self.vert_box = Gtk.Box(homogeneous=False,
 		                        orientation='GTK_ORIENTATION_VERTICAL')
 		self.add(self.vert_box)
 
 	def add_navigation_bar(self):
-		# Add the navigation bar that show the buttons responsible by control the ERA engine.
+		"""Add the navigation bar that show the buttons responsible by control the ERA engine."""
 		self.navbar = Gtk.HeaderBar(spacing=50)
 
 		# A box container to handle the buttons that allow configure the project properties
@@ -53,6 +54,11 @@ class CMainWindow(Gtk.Window):
 		button = Gtk.Button()
 		button.set_image(Gtk.Image.new_from_file("icons/species.png"))
 		button.connect("clicked", self.update_species)
+		config_box.add(button)
+
+		button = Gtk.Button()
+		button.set_image(Gtk.Image.new_from_file("icons/species.png"))
+		button.connect("clicked", self.update_connections)
 		config_box.add(button)
 
 		# A Box container that is set inside the NavigationBar to handle the buttons that controls the simulator
@@ -117,13 +123,13 @@ class CMainWindow(Gtk.Window):
 		self.vert_box.pack_start(self.navbar, False, False, 0)
 
 	def add_horizontal_pane(self):
-		# A Paned container with horizontal orientation that handle the notebook and project view
+		"""A Paned container with horizontal orientation that handle the notebook and project view"""
 		self.horizontal_pane = Gtk.Paned(orientation=Gtk.Orientation.HORIZONTAL)
 		self.vert_box.pack_start(self.horizontal_pane, True, True, 0)
 
 	def add_project_view(self):
-		# Create a porject view composed by a header and a ListBox that show the structure of itens present
-		# in the project
+		"""Create a porject view composed by a header and a ListBox that show the structure of itens present
+		in the project"""
 		self.project_view_box = Gtk.Box(homogeneous=False,
 		                                orientation=Gtk.Orientation.VERTICAL)
 		self.horizontal_pane.add1(self.project_view_box)
@@ -160,29 +166,59 @@ class CMainWindow(Gtk.Window):
 
 		for name in self.graph.vertex_properties["name"]:
 			exp = Gtk.Expander()
-			exp.set_label_widget(self.project_view_item_label(label=name,
+			exp.set_label_widget(self.project_view_item_label(label=[name],
 			                                                  icon="vertex"))
 			row = Gtk.ListBoxRow()
 			row.add(exp)
 			listbox.add(row)
+		# animals = self.ctrl.get_animals()
+		#
+		# for a in animals:
+		# 	exp = Gtk.Expander()
+		# 	exp.set_label_widget(self.project_view_item_label(label=[a["species"]],
+		# 	                                                  icon="vertex"))
+		#
+		# 	spread_models = "\t\tSpread Model: "
+		# 	for sm in a["spread_model"]:
+		# 		spread_models = spread_models + str(sm) + " "
+		#
+		# 	group = "\t\tTc Group: "
+		# 	for g in a["group"]:
+		# 		group = group + str(g) + " "
+		#
+		# 	habitat = "\t\tHabitat: "
+		# 	for h in a["habitat"]:
+		# 		habitat = habitat + str(h) + " "
+		# 	exp.add(self.project_view_item_label(label=[spread_models, group, habitat]))
+		#
+		# 	row = Gtk.ListBoxRow()
+		# 	row.add(exp)
+		# 	listbox.add(row)
 		listbox.show_all()
 
-	def project_view_item_label(self, label, icon):
-		# This function is used to construct the label of the items in the project view
-		item_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,
+	def project_view_item_label(self, label=None, icon=None):
+		"""This function is used to construct the label of the items in the project view"""
+		vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL,
 		                  homogeneous=False,
 		                  spacing=6)
-		item_label = Gtk.Label()
-		item_label.set_text(label)
 
-		if icon == "vertex":
-			item_icon = Gtk.Image.new_from_file("icons/vertex.png")
-		else:
-			item_icon = None
+		for l in label:
+			item_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,
+			                   homogeneous=False,
+			                   spacing=6)
+			item_label = Gtk.Label()
+			item_label.set_text(l)
+			if len(label) > 1:
+				item_label.set_markup("""<span foreground="blue">""" + l + "</span>")
 
-		item_box.add(item_icon)
-		item_box.pack_start(item_label, False, False, 0)
-		return item_box
+			if icon is not None:
+				item_icon = Gtk.Image.new_from_file("icons/" + icon + ".png")
+				item_box.add(item_icon)
+
+			item_box.pack_start(item_label, False, False, 6)
+			vbox.add(item_box)
+
+		return vbox
 
 	def add_notebook(self):
 
@@ -216,21 +252,21 @@ class CMainWindow(Gtk.Window):
 		self.horizontal_pane.add2(self.nb)
 
 	def add_statusbar(self):
-		# Add a status bar on the bottom of the window.
+		"""Add a status bar on the bottom of the window."""
 		self.sb = Gtk.Statusbar()
 		self.context_id = self.sb.get_context_id("__iteration__")
 		self.vert_box.pack_end(self.sb, False, False, 0)
 
 
 	def key_press_event(self, widget, event):
-		# Handle key press.
+		"""Handle key press."""
 
 		# If the page_environment is displayed than handle the event key inside graph_widget
 		if self.nb.get_current_page() == 0:
 			self.graph_widget.key_press_event(self.graph_widget, event=event)
 
 	def redraw(self):
-		# Redraw the graph in environment page and show the number of iterations executed by the SER simulation
+		"""Redraw the graph in environment page and show the number of iterations executed by the SER simulation"""
 		self.graph_widget.regenerate_surface(reset=True)
 		self.graph_widget.queue_draw()
 		self.sb.push(self.context_id,
@@ -238,19 +274,19 @@ class CMainWindow(Gtk.Window):
 		             "Speed: " + str(round(self.scale.get_value(), 0)) + "%   ")
 
 	def step_backward(self, widget):
-		# Execute one step backward in SER simulation
+		"""Execute one step backward in SER simulation"""
 		if not self.is_running:
 			self.graph = self.ctrl.step_backward(self.graph)
 			self.redraw()
 
 	def step_forward(self, widget):
-		# Execute one step forward in SER simulation
+		"""Execute one step forward in SER simulation"""
 		if not self.is_running:
 			self.graph = self.ctrl.step_forward(self.graph)
 			self.redraw()
 
 	def run_continuously(self, widget):
-		# Start a thread to run step forward continuously
+		"""Start a thread to run step forward continuously"""
 		if not self.is_running:
 			self.is_running = True
 			t = threading.Thread(target=self.threaded_step_forward)
@@ -261,20 +297,26 @@ class CMainWindow(Gtk.Window):
 			self.run_and_stop_btn.set_image(Gtk.Image.new_from_file("icons/run.png"))
 
 	def threaded_step_forward(self):
-		# Execute step forward continuously in SER simulation inside a thread
+		"""Execute step forward continuously in SER simulation inside a thread"""
 		while self.is_running:
 			self.graph = self.ctrl.step_forward(self.graph)
 			GObject.idle_add(self.redraw)
 			time.sleep(3 / self.scale.get_value())
 
 	def reset(self, widget):
-		# Reset the SER simulation
+		"""Reset the SER simulation"""
 		if not self.is_running:
 			self.graph = self.ctrl.reset(self.graph)
 			self.redraw()
 
 	def update_species(self, widget):
-		# Open new window to edit species properties
-		win = NewProjView.CUpdateSpecies()
+		"""Open new window to edit species properties"""
+		win = UpdateSpecies.CUpdateSpecies()
+		win.show_all()
+		win.set_keep_above(True)
+
+	def update_connections(self, widget):
+		"""Open new window to edit species properties"""
+		win = UpdateConnections.CUpdateConnections()
 		win.show_all()
 		win.set_keep_above(True)
