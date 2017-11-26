@@ -17,6 +17,7 @@ class CUpdateSpecies(Gtk.Window):
 	def __init__(self):
 		self.ctrl = Control.CController()
 		self.species = self.ctrl.get_species()      # Load species data from species.json
+		self.deleted = []    # Deleted species
 
 		# New window to add and update the species properties in the project.
 		Gtk.Window.__init__(self, title="Update Species")
@@ -251,6 +252,7 @@ class CUpdateSpecies(Gtk.Window):
 	def on_group_cell_toggled(self, widget, path):
 		"""Just change the state of Tc group toggle when the user click on it"""
 		self.group_sto[path][1] = not self.group_sto[path][1]
+		self.select.unselect_all()
 
 	def on_group_combo_changed(self, widget, path, text):
 		"""Change the combo to the value selected by the user and unselect the row"""
@@ -264,25 +266,36 @@ class CUpdateSpecies(Gtk.Window):
 				if a["species"] == widget.get_label():
 					self.update_properties_lists(species_prop=a)
 
-	def update_properties_lists(self, species_prop):
+	def update_properties_lists(self, species_prop=None):
 		"""Update the species properties options, in the right side of the window, with the data of the species selected
 		by the user from the list in the left side of the window"""
-		self.name_entry.set_text(species_prop["species"])
+		if species_prop is not None:
+			self.name_entry.set_text(species_prop["species"])
 
-		for row in self.habitat_sto:
-			if row[0] in species_prop["habitat"]:
-				row[1] = True
-			else:
+			for row in self.habitat_sto:
+				if row[0] in species_prop["habitat"]:
+					row[1] = True
+				else:
+					row[1] = False
+
+			for row in self.group_sto:
+				if row[0] in species_prop["group"]:
+					row[1] = True
+					index = species_prop["group"].index(row[0])
+					row[2] = species_prop["spread_model"][index]
+				else:
+					row[1] = False
+					row[2] = "SI"
+		else:
+			self.name_entry.set_text("")
+
+			for row in self.habitat_sto:
 				row[1] = False
 
-		for row in self.group_sto:
-			if row[0] in species_prop["group"]:
-				row[1] = True
-				index = species_prop["group"].index(row[0])
-				row[2] = species_prop["spread_model"][index]
-			else:
+			for row in self.group_sto:
 				row[1] = False
 				row[2] = "SI"
+
 
 	def update_species_list(self, widget, event):
 		"""Update the species list in the right side of the window with the properties information provided by the user."""
@@ -319,14 +332,35 @@ class CUpdateSpecies(Gtk.Window):
 		"""Remove the species selected by the user from the list"""
 		for a in self.species:
 			if self.name_entry.get_text() == a["species"]:
+				self.deleted.append(a["species"])
 				self.species.remove(a)
 		self.populate_species_list()
+		self.update_properties_lists()
 
 	def cancel_clicked(self, widget, event):
 		"""Just close the window and cancel the operation without saving the modifications"""
 		self.close()
 
 	def ok_clicked(self, widget, event):
-		"""Close the window and save the modification to the species properties on species.json file"""
+		"""Close the window, save the modification of species properties on species.json file and update the
+		connections to include a new species or delete any one selected by the user."""
 		self.ctrl.save_species_list(data=self.species)
+
+		# Add new animals to connections.json
+		connections = self.ctrl.get_connections()
+		for s in self.species:
+			if s["species"] not in connections:
+				connections.update({s["species"]: []})
+
+		# Remove deleted species from connections.json file
+		for item in self.deleted:
+			if item in connections:
+				del connections[item]
+		for species in connections:
+			for item in self.deleted:
+				if item in connections[species]:
+					index = connections[species].index(item)
+					connections[species].pop(index)
+		self.ctrl.save_connections_list(connections)
+
 		self.close()
