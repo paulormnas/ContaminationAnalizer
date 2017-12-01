@@ -164,7 +164,7 @@ class CMainWindow(Gtk.Window):
 		listbox.set_selection_mode(Gtk.SelectionMode.NONE)
 		self.project_view_box.pack_end(listbox, True, True, 0)
 
-		for name in self.graph.vertex_properties["name"]:
+		for name in self.graph.vertex_properties["species"]:
 			exp = Gtk.Expander()
 			exp.set_label_widget(self.project_view_item_label(label=[name],
 			                                                  icon="vertex"))
@@ -229,14 +229,14 @@ class CMainWindow(Gtk.Window):
 		self.graph_widget = gtk_graph_draw.GraphWidgetWithBackImage(self.graph,
 		                                                       pos=self.graph.vertex_properties["position"],
 		                                                       vertex_size=80,
-		                                                       vertex_text=self.graph.vertex_properties["name"],
+		                                                       vertex_text=self.graph.vertex_properties.species,
 		                                                       vertex_text_position=-5,
 		                                                       vertex_font_size=12,
-		                                                       edge_pen_width=self.graph.edge_properties["contaminationCriteria"],
+		                                                       # edge_pen_width=self.graph.edge_properties["contaminationCriteria"],
 		                                                       geometry=(self.screen.get_width, self.screen.get_height),
 		                                                       edge_marker_size=30,
 		                                                       bg_color=[1, 1, 1, 0],
-		                                                       bg_image="terrain.png") #Only .png files are accepted
+		                                                       bg_image="images/terrain.png") #Only .png files are accepted
 
 		self.page_environment.add_overlay(self.graph_widget)
 		# self.page_environment.add(Gtk.Label('Environment simulation page'))

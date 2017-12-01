@@ -11,11 +11,13 @@ class CController():
 	"""
 	def __init__(self):
 		"""Instantiate the classes that will be controlled by CController"""
-		self.env_graph = test_graph.CEnvironmentGraph()
-		self.graph = self.env_graph.get_graph()
 		self.ser = SER.CSER()
 		self.ld = LoadData.CLoadData()
 		self.sd = SaveData.CSaveData()
+
+		self.env_graph = test_graph.CEnvironmentGraph(species=self.ld.read_species(),
+		                                              connections=self.ld.read_connections())
+		self.graph = self.env_graph.get_graph()
 
 	def get_graph(self):
 		"""Get the graph that will be drawn in the environment page"""
