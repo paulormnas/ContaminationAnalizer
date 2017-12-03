@@ -48,7 +48,6 @@ Now start the container:
 $ docker run -ti --rm -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix paulormnas/csa ipython3
 ```
 
-
 On a new terminal, get the container ID and copy the code to a directory inside the container:
 
 ```commandline
@@ -59,7 +58,8 @@ $ cp ..
 $ docker cp ContaminationAnalyser/ de513c9e2123:/opt/
 ```
 
-Return to the container terminal you can change to the directory where the CSA files were copied and reun the software:
+Return to the container terminal, where the Ipython command shell is running, and go to the directory where the CSA files 
+were copied. Now you can run the CSA software:
 
 ```commandline
 cd /opt/ContaminationAnalyser/
