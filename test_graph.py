@@ -2,13 +2,19 @@
 from graph_tool.all import *
 from random import *
 
-class CEnvironmentGraph():
+import LoadData
 
-# This class instaciate a graph-tool.Graph object and set the vertex and edge properties accordingly
-# to the configuration file.
-    def __init__(self):
+class CEnvironmentGraph():
+    """This class instantiate a graph-tool.Graph object and set the vertex and edge properties accordingly
+    to the configuration file."""
+
+    def __init__(self, species, connections):
 
         self.g = Graph()  # Create new graph object
+        self.species = species
+        self.connections = connections
+        self.num_vertex = 10
+        # randint(0, 50)
         
         self.names = []
         self.contaminationCriteria = []
@@ -19,68 +25,108 @@ class CEnvironmentGraph():
         self.add_edge()
 
     def read_data(self):
-        # Read data from "dados_animais.txt" to set the graph properties
-        ocorrencia = []
-        dataFile = open("dados_animais.txt", "r", encoding='utf-8')
+        """ Read data from "dados_animais.txt" to set the graph properties"""
+        # ocorrencia = []
+        # dataFile = open("dados_animais.txt", "r", encoding='utf-8')
+        #
+        # for line in dataFile:
+        #     if self.count != 0:
+        #         self.names.append(line[:line.index('\t')])
+        #         line = line[line.index('\t') + 1:]
+        #         self.contaminationCriteria.append(line[:line.index('\t')])
+        #         line = line[line.index('\t') + 1:]
+        #         if line[len(line) - 1] == '\n':
+        #             ocorrencia.append(line[:len(line) - 1])
+        #         else:
+        #             ocorrencia.append(line)
+        #     self.count = self.count + 1
 
-        for line in dataFile:
-            if self.count != 0:
-                self.names.append(line[:line.index('\t')])
-                line = line[line.index('\t') + 1:]
-                self.contaminationCriteria.append(line[:line.index('\t')])
-                line = line[line.index('\t') + 1:]
-                if line[len(line) - 1] == '\n':
-                    ocorrencia.append(line[:len(line) - 1])
-                else:
-                    ocorrencia.append(line)
-            self.count = self.count + 1
+
 
     def add_vertex(self):
-        # Add vertex to the graph with the properties read from the file
-        self.g.add_vertex(self.count - 1)
+        """ Add vertex to the graph with the properties read from the file"""
+        # self.g.add_vertex(self.count - 1)
+        #
+        # vprop_name = self.g.new_vertex_property("string")  # Add properties to the vertex
+        #
+        # self.count = 0
+        # for name in self.names:  # Name the vertex
+        #     vprop_name[self.count] = name
+        #     self.count = self.count + 1
+        #
+        # self.g.vertex_properties["name"] = vprop_name  # Internalize de property "name"
+        #
+        # vprop_criterion = self.g.new_vertex_property("double")  # Add property to the vertices
+        #
+        # self.count = 0
+        # for value in self.contaminationCriteria:  # Define contamination criterion of vertices
+        #     vprop_criterion[self.count] = float(value)
+        #     self.count = self.count + 1
+        #
+        # self.g.vertex_properties[
+        #     "contaminationCriteria"] = vprop_criterion  # Internalize the property "contaminationCriteria"
 
-        vprop_name = self.g.new_vertex_property("string")  # Add properties to the vertex
+        self.g.add_vertex(self.num_vertex)
+        vprop_name = self.g.new_vertex_property("string")
+        vprop_spread_model = self.g.new_vertex_property("vector<string>")
+        vprop_group = self.g.new_vertex_property("vector<string>")
+        vprop_habitat = self.g.new_vertex_property("vector<string>")
 
-        self.count = 0
-        for name in self.names:  # Name the vertex
-            vprop_name[self.count] = name
-            self.count = self.count + 1
+        for count in range(0, self.num_vertex, 1):
+            n = randint(0, len(self.species) - 1)
+            s = self.species[n]
 
-        self.g.vertex_properties["name"] = vprop_name  # Internalize de property "name"
+            vprop_name[count] = s["species"]
+            vprop_spread_model[count] = s["spread_model"]
+            vprop_group[count] = s["group"]
+            vprop_habitat[count] = s["habitat"]
 
-        vprop_criterion = self.g.new_vertex_property("double")  # Add property to the vertices
-
-        self.count = 0
-        for value in self.contaminationCriteria:  # Define contamination criterion of vertices
-            vprop_criterion[self.count] = float(value)
-            self.count = self.count + 1
-
-        self.g.vertex_properties[
-            "contaminationCriteria"] = vprop_criterion  # Internalize the property "contaminationCriteria"
+        self.g.vertex_properties.species = vprop_name
+        self.g.vertex_properties.spread_model = vprop_spread_model
+        self.g.vertex_properties.group = vprop_group
+        self.g.vertex_properties.habitat = vprop_habitat
 
     def add_edge(self):
-        # Create edges between vertices
-        vprop_criterion = self.g.vertex_properties["contaminationCriteria"]
-        eprop_criterion = self.g.new_edge_property("double")  # Add property to the edges
+        """ Create edges between vertices"""
+        # vprop_criterion = self.g.vertex_properties["contaminationCriteria"]
+        # eprop_criterion = self.g.new_edge_property("double")  # Add property to the edges
+        #
+        # for i in range(1, 8):
+        #     self.g.add_edge(0, i)
+        #     eprop_criterion[(0, i)] = vprop_criterion.a[0] / 10
+        #
+        # for i in range(1, 4):
+        #     self.g.add_edge(6, i)
+        #     eprop_criterion[(6, i)] = vprop_criterion.a[i] / 10
+        #     self.g.add_edge(7, i)
+        #     eprop_criterion[(7, i)] = vprop_criterion.a[i] / 10
+        #
+        # self.g.edge_properties["contaminationCriteria"] = eprop_criterion
+        count = 0
+        for s in self.connections:
+            vertex_list = []
+            for v in self.g.get_vertices():
+                if self.g.vertex_properties.species[v] == s:
+                    vertex_list.append(v)
+                count += 1
 
-        for i in range(1, 8):
-            self.g.add_edge(0, i)
-            eprop_criterion[(0, i)] = vprop_criterion.a[0] / 10
+            for v2 in self.g.get_vertices():
+                if v2 not in vertex_list and self.g.vertex_properties.species[v2] in self.connections[s]:
+                    for v1 in vertex_list:
+                        self.g.add_edge(v1, v2)
+                        count += 1
+                count += 1
 
-        for i in range(1, 4):
-            self.g.add_edge(6, i)
-            eprop_criterion[(6, i)] = vprop_criterion.a[i] / 10
-            self.g.add_edge(7, i)
-            eprop_criterion[(7, i)] = vprop_criterion.a[i] / 10
+            print("Count: ", count)
 
-        self.g.edge_properties["contaminationCriteria"] = eprop_criterion
 
     def get_graph(self):
-            v_pos = self.g.new_vertex_property("vector<double>")
-            for i in range(0,7,1):
-                x = randint(0, 400)
-                y = randint(0, 200)
-                v_pos[self.g.vertex(i)] = [x, y]
-            self.g.vertex_properties["position"] = v_pos
+        """ Set the vertices positions and return the graph object"""
+        v_pos = self.g.new_vertex_property("vector<double>")
+        for i in range(0, self.num_vertex,1):
+            x = randint(0, 400)
+            y = randint(0, 200)
+            v_pos[self.g.vertex(i)] = [x, y]
+        self.g.vertex_properties["position"] = v_pos
 
-            return self.g
+        return self.g

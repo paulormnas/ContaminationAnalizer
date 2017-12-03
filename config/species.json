@@ -1,0 +1,20 @@
+[
+  {
+    "species": "Didelphis Marsupialis",
+    "spread_model": ["SI", "SIR"],
+    "group": ["TcI", "TcII"],
+    "habitat": ["forest", "grass"]
+  }, 
+  {
+    "species": "Triatoma Infestans",
+    "spread_model": ["SI","SI","SIR","SIS"],
+    "group": ["TcI","TcII","TcV","TcVII"],
+    "habitat": ["forest","grass","city"]
+  }, 
+  {
+    "species": "Homo Sapiens",
+    "spread_model": ["SI"],
+    "group": ["TcI"],
+    "habitat": ["forest","grass","city"]
+  }
+]
