@@ -1,3 +1,11 @@
 {
-  "habitats" : ["forest", "grass", "water", "city"]
+  "habitats" : ["AGRICULTURA",
+    "AREAS CAMPESTRES",
+    "AREAS INDISCRIMINADAS",
+    "EXTRATIVISMO VEGETAL",
+    "PECUARIA",
+    "PECUARIA+EXTRATIVISMO VEGETAL",
+    "AREAS URBANAS",
+    "FLORESTA",
+    "Massa_agua"]
 }
