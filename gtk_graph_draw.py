@@ -34,6 +34,7 @@ from graph_tool.draw.cairo_draw import _vdefaults, _edefaults
 from graph_tool.draw import sfdp_layout, random_layout, _avg_edge_distance, \
     coarse_graphs
 
+import shapefile
 
 def point_in_poly(p, poly):
     i, c = 0, False
@@ -374,7 +375,10 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
 
         if self.background is not None:
             # Load image to be set as background of GraphWidget
-            self.bg_image = cairo.ImageSurface.create_from_png(self.background)
+            # self.bg_image = cairo.ImageSurface.create_from_png(self.background)
+
+            # Load the shapefile
+            self.bg_image = shapefile.Reader(self.background)
         else:
             self.bg_image = None
 
@@ -386,8 +390,13 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
                                                                                 0,
                                                                                 0)
         if self.background is not None and self.bg_image is not None:
-            self.img_height = self.bg_image.get_height()
-            self.img_width = self.bg_image.get_width()
+            # self.img_height = self.bg_image.get_height()
+            # self.img_width = self.bg_image.get_width()
+
+            # The image's width and height are the same as the widget, but changing the aspect ratio for 4:3
+            self.img_height = self.widget_height / 3
+            self.img_width = self.widget_width / 4
+
             width_ratio = float(self.widget_width) / float(self.img_width)
             height_ratio = float(self.widget_height) / float(self.img_height)
             self.scale_xy = min(width_ratio, height_ratio)
@@ -407,6 +416,60 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
         self.bgmatrix.translate(self.left + self.widget_pos_x, self.top + self.widget_pos_y)
         self.bgmatrix.scale(self.scale_xy, self.scale_xy)
 
+    def draw_shapes(self, cr):
+        sf = self.bg_image
+        x1 = sf.bbox[0]
+        y1 = sf.bbox[1]
+        x2 = sf.bbox[2]
+        y2 = sf.bbox[3]
+        shapes = sf.shapes()
+        records = sf.records()
+
+        legend_color = {'AGRICULTURA': (181 / 255, 200 / 255, 103 / 255),
+                        'AREAS CAMPESTRES': (181 / 255, 200 / 255, 103 / 255),
+                        'AREAS INDISCRIMINADAS': (181 / 255, 200 / 255, 103 / 255),
+                        'EXTRATIVISMO VEGETAL': (181 / 255, 200 / 255, 103 / 255),
+                        'PECUARIA': (181 / 255, 200 / 255, 103 / 255),
+                        'PECUARIA+EXTRATIVISMO VEGETAL': (181 / 255, 200 / 255, 103 / 255),
+                        'AREAS URBANAS': (91 / 255, 10 / 255, 10 / 255),
+                        'FLORESTA': (3 / 255, 168 / 255, 69 / 255),
+                        'Massa_agua': (166 / 255, 206 / 255, 227 / 255)
+                        }
+
+        # for i in range(len(shapes)):
+        for i in range(len(shapes)):
+            cr.set_line_width(9)
+            color = legend_color[
+                records[i][6]]  # Need to read the record's position 6 to identify the field related to the color
+            cr.set_source_rgb(color[0], color[1], color[2])
+
+            start_polygon = True
+            coord = shapes[i].points
+            for j in range(len(shapes[i].points)):
+                # Normalization of geospatial coordinates
+                x_norm = (coord[j][0] - x1) / (x2 - x1)
+                y_norm = (coord[j][1] - y1) / (y2 - y1)
+
+                # Need to consider the origin on the top left corner, not in down left corner. This makes total
+                # difference when drawing the shapes.Besides, the aspect ratio need to be considered too.
+                x_draw_point = (x_norm * self.widget_width) / 4
+                y_draw_point = (self.widget_height - (y_norm * self.widget_height)) / 3
+
+                if j in shapes[i].parts:
+                    # if "j" is on the start of a new shape, the need to move the brushes to the start point withont
+                    # draw a line connecting the last point to the actual
+                    start_polygon = True
+
+                if start_polygon:
+                    # if is the first point of a shape part, then move the brushes to the initial point to start drawing
+                    cr.move_to(x_draw_point, y_draw_point)
+                    start_polygon = False
+
+                else:
+                    # Draw a line from last point to actual
+                    cr.line_to(x_draw_point, y_draw_point)
+
+            cr.fill()
 
     def cleanup(self):
         """Cleanup callbacks."""
@@ -470,8 +533,8 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
                     if self.vertex_matrix is not None:
                         self.vertex_matrix = VertexMatrix(self.g, self.pos)
                     self.epsilon = 0.05 * self.layout_K * self.g.num_edges()
-                    geometry = [self.img_width,
-                                self.img_height]
+                    geometry = [self.img_width * self.scale_xy,
+                                self.img_height * self.scale_xy]
                     adjust_default_sizes(self.g, geometry, self.vprops,
                                          self.eprops, force=True)
                     self.fit_to_window(ink=False)
@@ -502,8 +565,8 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
             self.regenerate_generator = None
             self.regen_context = None
 
-        geometry = [self.img_width * 3,
-                    self.img_height * 3]
+        geometry = [self.img_width * self.scale_xy * 3,
+                    self.img_height * self.scale_xy * 3]
 
         if (self.base is None or self.base_geometry[0] != geometry[0] or
             self.base_geometry[1] != geometry[1] or reset):
@@ -519,13 +582,13 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
             self.base_geometry = geometry
 
             m = cairo.Matrix()
-            m.translate(self.img_width,
-                        self.img_height)
+            m.translate(self.img_width * self.scale_xy,
+                        self.img_height * self.scale_xy)
             self.smatrix = self.smatrix.multiply(m)
             self.tmatrix = self.tmatrix.multiply(self.smatrix)
             self.smatrix = cairo.Matrix()
-            self.smatrix.translate(-self.img_width,
-                                   -self.img_height)
+            self.smatrix.translate(-self.img_width * self.scale_xy,
+                                   -self.img_height * self.scale_xy)
 
         if self.regenerate_generator is None:
             cr = cairo.Context(self.base)
@@ -551,8 +614,8 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
     def draw(self, da, cr):
         r"""Redraw the widget."""
 
-        geometry = [self.img_width,
-                    self.img_height]
+        geometry = [self.img_width * self.scale_xy,
+                    self.img_height * self.scale_xy]
 
         if self.geometry is None:
             adjust_default_sizes(self.g, geometry, self.vprops, self.eprops)
@@ -602,10 +665,12 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
 
         elif self.background is not None and self.bg_image is not None:
             cr.set_matrix(self.bgmatrix)
-            sp = cairo.SurfacePattern(self.bg_image)
-            cr.set_source(sp)
+            # The following commented code should be used to draw a background using an image
+            # sp = cairo.SurfacePattern(self.bg_image)
+            # cr.set_source(sp)
+            self.draw_shapes(cr)
 
-        cr.paint()
+        # cr.paint() # This function is used only with images or solid colors in the background.
         cr.save()
         cr.set_matrix(self.smatrix)
         cr.set_source_surface(self.base)
@@ -699,8 +764,8 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
             else:
                 txt = ", ".join([str(x[self.picked])
                                  for x in self.display_prop])
-            geometry = [self.img_width,
-                        self.img_height]
+            geometry = [self.img_width * self.scale_xy,
+                        self.img_height * self.scale_xy]
             pos = [10, geometry[1] - 10]
             cr.set_font_size(self.display_prop_size)
             ext = cr.text_extents(txt)
@@ -770,7 +835,7 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
 
     def fit_to_window(self, ink=False, g=None):
         r"""Fit graph to image, if there is a background image, otherwise fit the graph to window."""
-        geometry = [self.img_width, self.img_height]
+        geometry = [self.img_width * self.scale_xy, self.img_height * self.scale_xy]
         ox = self.left + self.widget_pos_x
         oy = self.top + self.widget_pos_y
         if g is None:

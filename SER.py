@@ -60,9 +60,9 @@ class CSER:
 					old_edge = graph.edge(sink, neighbor)
 					new_edge = graph.add_edge(neighbor, sink)
 
-				eprop_criterio = graph.edge_properties["contaminationCriteria"]
-				eprop_criterio[(new_edge.source(), new_edge.target())] = eprop_criterio[(old_edge.source(), old_edge.target())]
-				graph.edge_properties["contaminationCriteria"] = eprop_criterio
+				# eprop_criterio = graph.edge_properties["contaminationCriteria"]
+				# eprop_criterio[(new_edge.source(), new_edge.target())] = eprop_criterio[(old_edge.source(), old_edge.target())]
+				# graph.edge_properties["contaminationCriteria"] = eprop_criterio
 				graph.remove_edge(old_edge)
 
 		self.sinks = []

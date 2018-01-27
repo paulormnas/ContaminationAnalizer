@@ -19,11 +19,11 @@ class CMainWindow(Gtk.Window):
 		"""Start the controller and instantiate all the components of the Main Window"""
 		self.ctrl = Control.CController()
 		self.graph = self.ctrl.get_graph()
-
+		self.sf = "shapefile/clipabaetetubasolo.shp"
 		self.is_running = False # Attribute to control thread activity
 
 		# Program main window.
-		Gtk.Window.__init__(self, title="ERAAC") # ERAAC - Escalonamento por Reversão de Arestas para Análise de Contaminação
+		Gtk.Window.__init__(self, title="CSA") # CSA - Contamination Spreading Analyse
 		# Get screen size and resize the program window to fill the screen.
 		self.set_icon_from_file("icons/vertex.png")
 		self.screen = self.get_screen()
@@ -236,7 +236,7 @@ class CMainWindow(Gtk.Window):
 		                                                       geometry=(self.screen.get_width, self.screen.get_height),
 		                                                       edge_marker_size=30,
 		                                                       bg_color=[1, 1, 1, 0],
-		                                                       bg_image="images/terrain.png") #Only .png files are accepted
+		                                                       bg_image=self.sf) #Only shapefiles are accepted
 
 		self.page_environment.add_overlay(self.graph_widget)
 		# self.page_environment.add(Gtk.Label('Environment simulation page'))
