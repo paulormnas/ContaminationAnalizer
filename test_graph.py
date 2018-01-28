@@ -3,6 +3,7 @@ from graph_tool.all import *
 from random import *
 
 import LoadData
+import math
 
 class CEnvironmentGraph():
     """This class instantiate a graph-tool.Graph object and set the vertex and edge properties accordingly
@@ -13,15 +14,16 @@ class CEnvironmentGraph():
         self.g = Graph()  # Create new graph object
         self.species = species
         self.connections = connections
-        self.num_vertex = 10
-        # randint(0, 50)
-        
+        self.num_vertex = 200
+
         self.names = []
         self.contaminationCriteria = []
         self.count = 0
+        self.g.vertex_properties["position"] = self.g.new_vertex_property("vector<double>")
 
         self.read_data()
         self.add_vertex()
+        self.calc_pos()
         self.add_edge()
 
     def read_data(self):
@@ -86,6 +88,15 @@ class CEnvironmentGraph():
         self.g.vertex_properties.group = vprop_group
         self.g.vertex_properties.habitat = vprop_habitat
 
+    def calc_pos(self):
+        """ Set the vertices positions and return the graph object"""
+        v_pos = self.g.new_vertex_property("vector<double>")
+        for i in range(0, self.num_vertex, 1):
+            x = randint(0, 500)
+            y = randint(0, 400)
+            v_pos[self.g.vertex(i)] = [x, y]
+        self.g.vertex_properties["position"] = v_pos
+
     def add_edge(self):
         """ Create edges between vertices"""
         # vprop_criterion = self.g.vertex_properties["contaminationCriteria"]
@@ -103,30 +114,28 @@ class CEnvironmentGraph():
         #
         # self.g.edge_properties["contaminationCriteria"] = eprop_criterion
         count = 0
+        dist_max = 50  # Max distance to put a edge between two vertices
         for s in self.connections:
             vertex_list = []
+            pos_list = []
             for v in self.g.get_vertices():
                 if self.g.vertex_properties.species[v] == s:
                     vertex_list.append(v)
-                count += 1
+                    pos_list.append(self.g.vertex_properties.position[v])
 
             for v2 in self.g.get_vertices():
-                if v2 not in vertex_list and self.g.vertex_properties.species[v2] in self.connections[s]:
+
+                if v2 not in vertex_list and \
+                        self.g.vertex_properties.species[v2] in self.connections[s]:
                     for v1 in vertex_list:
-                        self.g.add_edge(v1, v2)
-                        count += 1
-                count += 1
+                        x1, y1 = self.g.vertex_properties.position[v1]
+                        x2, y2 = self.g.vertex_properties.position[v2]
+                        if(math.fabs(x1 - x2) < dist_max and math.fabs(y1 - y2) < dist_max):
+                            self.g.add_edge(v1, v2)
+                            count += 1
 
             print("Count: ", count)
-
+            count = 0
 
     def get_graph(self):
-        """ Set the vertices positions and return the graph object"""
-        v_pos = self.g.new_vertex_property("vector<double>")
-        for i in range(0, self.num_vertex,1):
-            x = randint(0, 400)
-            y = randint(0, 200)
-            v_pos[self.g.vertex(i)] = [x, y]
-        self.g.vertex_properties["position"] = v_pos
-
         return self.g

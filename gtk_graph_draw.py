@@ -319,8 +319,12 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
             self.g = self.cg
             self.pos = self.cpos
             self.layout_step = self.layout_K
+            self.selected = self.g.own_property(self.selected)
+            self.highlight = self.g.own_property(self.highlight)
+            self.sel_edge_filt = self.g.own_property(self.sel_edge_filt)
         else:
             self.cg = None
+
         if update_layout:
             self.reset_layout()
 
@@ -436,7 +440,6 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
                         'Massa_agua': (166 / 255, 206 / 255, 227 / 255)
                         }
 
-        # for i in range(len(shapes)):
         for i in range(len(shapes)):
             cr.set_line_width(9)
             color = legend_color[
@@ -527,6 +530,9 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
                     self.layout_K *= 0.75
                     self.g = self.cg
                     self.pos = self.cpos
+                    self.selected = self.g.own_property(self.selected)
+                    self.highlight = self.g.own_property(self.highlight)
+                    self.sel_edge_filt = self.g.own_property(self.sel_edge_filt)
                     self.layout_step = max(self.layout_K,
                                            _avg_edge_distance(self.g,
                                                               self.pos) / 10)
@@ -542,6 +548,9 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
                 except StopIteration:
                     self.g = self.ag
                     self.pos = self.apos
+                    self.selected = self.g.own_property(self.selected)
+                    self.highlight = self.g.own_property(self.highlight)
+                    self.sel_edge_filt = self.g.own_property(self.sel_edge_filt)
                     self.g.copy_property(self.cpos, self.pos)
                     if self.vertex_matrix is not None:
                         self.vertex_matrix = VertexMatrix(self.g, self.pos)
