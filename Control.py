@@ -23,6 +23,15 @@ class CController():
 		"""Get the graph that will be drawn in the environment page"""
 		return self.env_graph.get_graph()
 
+	def set_shapefile(self, sf):
+		self.env_graph.read_shapes(sf)
+
+	def update_widget_dim(self, w_width, w_height):
+		self.env_graph.update_dimensions(w_width, w_height)
+
+	def gen_graph(self):
+		self.env_graph.gen_graph()
+
 	def get_iterations(self):
 		return self.ser.get_iterations_number()
 

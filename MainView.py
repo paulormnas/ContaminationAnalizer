@@ -17,9 +17,10 @@ class CMainWindow(Gtk.Window):
 
 	def __init__(self):
 		"""Start the controller and instantiate all the components of the Main Window"""
-		self.ctrl = Control.CController()
-		self.graph = self.ctrl.get_graph()
 		self.sf = "shapefile/clipabaetetubasolo.shp"
+		self.ctrl = Control.CController()
+		self.ctrl.set_shapefile(self.sf)
+		self.graph = self.ctrl.get_graph()
 		self.is_running = False # Attribute to control thread activity
 
 		# Program main window.
@@ -59,6 +60,11 @@ class CMainWindow(Gtk.Window):
 		button = Gtk.Button()
 		button.set_image(Gtk.Image.new_from_file("icons/species.png"))
 		button.connect("clicked", self.update_connections)
+		config_box.add(button)
+
+		button = Gtk.Button()
+		button.set_image(Gtk.Image.new_from_icon_name("help-about", Gtk.IconSize.MENU))
+		button.connect("clicked", self.generate_graph)
 		config_box.add(button)
 
 		# A Box container that is set inside the NavigationBar to handle the buttons that controls the simulator
@@ -237,6 +243,7 @@ class CMainWindow(Gtk.Window):
 		                                                            bg_color=[1, 1, 1, 0],
 		                                                            bg_image=self.sf    #Only shapefiles are accepted
 		                                                            )
+		self.graph_widget.connect("size_allocate", self.size_allocate)
 
 		self.page_environment.add_overlay(self.graph_widget)
 		# self.page_environment.add(Gtk.Label('Environment simulation page'))
@@ -257,6 +264,14 @@ class CMainWindow(Gtk.Window):
 		self.context_id = self.sb.get_context_id("__iteration__")
 		self.vert_box.pack_end(self.sb, False, False, 0)
 
+	def size_allocate(self, da, allocation):
+		self.graph_widget_width = allocation.width
+		self.graph_widget_height = allocation.height
+		self.ctrl.update_widget_dim(self.graph_widget_width, self.graph_widget_height)
+
+	def generate_graph(self, widget):
+		self.ctrl.gen_graph()
+		self.redraw()
 
 	def key_press_event(self, widget, event):
 		"""Handle key press."""

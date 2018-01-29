@@ -264,6 +264,7 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
 
         self.g = g
         self.pos = pos
+        self.v_num = len(self.g.get_vertices())
         self.vprops = vprops
         self.eprops = eprops
         self.vorder = vorder
@@ -351,6 +352,7 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
 
         self.set_property("can-focus", True)
         self.connect("size_allocate", self.size_allocate)
+        self.connect("realize", self.realize)
         self.connect("draw", self.draw)
 
         try:
@@ -386,13 +388,16 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
         else:
             self.bg_image = None
 
-    def size_allocate(self, da, allocation):
-        self.widget_width = allocation.width
-        self.widget_height = allocation.height
+    def realize(self, da):
         self.widget_pos_x, self.widget_pos_y = Gtk.Widget.translate_coordinates(self,
                                                                                 Gtk.Widget.get_toplevel(self),
                                                                                 0,
                                                                                 0)
+
+    def size_allocate(self, da, allocation):
+        self.widget_width = allocation.width
+        self.widget_height = allocation.height
+
         if self.background is not None and self.bg_image is not None:
             # self.img_height = self.bg_image.get_height()
             # self.img_width = self.bg_image.get_width()
@@ -622,6 +627,12 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
 
     def draw(self, da, cr):
         r"""Redraw the widget."""
+
+        if len(self.g.get_vertices()) is not self.v_num:
+            self.v_num = len(self.g.get_vertices())
+            self.pos = self.g.vertex_properties.position
+            self.fit_to_window()
+            self.regenerate_surface(reset=True)
 
         geometry = [self.img_width * self.scale_xy,
                     self.img_height * self.scale_xy]
@@ -1245,6 +1256,8 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
 
     def drag_gesture_end(self, gesture, seq):
         self.is_drag_gesture = False
+        self.fit_to_window()
+        self.regenerate_surface(reset=True)
 
     def drag_gesture_update(self, gesture, dx, dy):
         delta = (dx - self.drag_last[0], dy - self.drag_last[1])
