@@ -1,5 +1,10 @@
 {
-	"Triatoma Infestans":["Didelphis Marsupialis", "Homo Sapiens"],
-	"Didelphis Marsupialis":[],
-	"Homo Sapiens":[]
+  "Didelphis Marsupialis": [
+    "Homo Sapiens"
+  ],
+  "Triatoma Infestans": [
+    "Didelphis Marsupialis",
+    "Homo Sapiens"
+  ],
+  "Homo Sapiens": []
 }

@@ -1,20 +1,66 @@
 [
   {
+    "group": [
+      "TcI",
+      "TcII"
+    ],
     "species": "Didelphis Marsupialis",
-    "spread_model": ["SI", "SIR"],
-    "group": ["TcI", "TcII"],
-    "habitat": ["forest", "grass"]
-  }, 
+    "habitat": [
+      "AREAS CAMPESTRES",
+      "AREAS INDISCRIMINADAS",
+      "EXTRATIVISMO VEGETAL",
+      "FLORESTA"
+    ],
+    "spread_model": [
+      "S",
+      "S"
+    ]
+  },
   {
+    "group": [
+      "TcI",
+      "TcII",
+      "TcV",
+      "TcVII"
+    ],
     "species": "Triatoma Infestans",
-    "spread_model": ["SI","SI","SIR","SIS"],
-    "group": ["TcI","TcII","TcV","TcVII"],
-    "habitat": ["forest","grass","city"]
-  }, 
+    "habitat": [
+      "AREAS CAMPESTRES",
+      "AREAS INDISCRIMINADAS",
+      "EXTRATIVISMO VEGETAL",
+      "PECUARIA+EXTRATIVISMO VEGETAL",
+      "FLORESTA"
+    ],
+    "spread_model": [
+      "SI",
+      "SI",
+      "SIR",
+      "SIS"
+    ],
+    "state": [
+      "S",
+      "S",
+      "S",
+      "S"
+    ]
+  },
   {
+    "group": [
+      "TcI"
+    ],
     "species": "Homo Sapiens",
-    "spread_model": ["SI"],
-    "group": ["TcI"],
-    "habitat": ["forest","grass","city"]
+    "habitat": [
+      "AGRICULTURA",
+      "EXTRATIVISMO VEGETAL",
+      "PECUARIA",
+      "PECUARIA+EXTRATIVISMO VEGETAL",
+      "AREAS URBANAS"
+    ],
+    "spread_model": [
+      "SI"
+    ],
+    "state":[
+      "S"
+    ]
   }
 ]

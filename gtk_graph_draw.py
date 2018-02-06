@@ -458,13 +458,13 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
                 x_norm = (coord[j][0] - x1) / (x2 - x1)
                 y_norm = (coord[j][1] - y1) / (y2 - y1)
 
-                # Need to consider the origin on the top left corner, not in down left corner. This makes total
-                # difference when drawing the shapes.Besides, the aspect ratio need to be considered too.
+                # Need to consider the origin on the top left corner, not at the bottom left corner. This makes total
+                # difference when drawing the shapes. Besides, the aspect ratio need to be considered too.
                 x_draw_point = (x_norm * self.widget_width) / 4
                 y_draw_point = (self.widget_height - (y_norm * self.widget_height)) / 3
 
                 if j in shapes[i].parts:
-                    # if "j" is on the start of a new shape, the need to move the brushes to the start point withont
+                    # if "j" is on the start of a new shape, then need to move the brushes to the start point without
                     # draw a line connecting the last point to the actual
                     start_polygon = True
 

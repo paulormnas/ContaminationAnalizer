@@ -238,6 +238,7 @@ class CMainWindow(Gtk.Window):
 		                                                            vertex_text=self.graph.vertex_properties.species,
 		                                                            vertex_text_position=-5,
 		                                                            vertex_font_size=12,
+		                                                            fit_view=True,
 		                                                            # edge_pen_width=self.graph.edge_properties["contaminationCriteria"],
 		                                                            edge_marker_size=10,
 		                                                            bg_color=[1, 1, 1, 0],
@@ -265,11 +266,17 @@ class CMainWindow(Gtk.Window):
 		self.vert_box.pack_end(self.sb, False, False, 0)
 
 	def size_allocate(self, da, allocation):
+		"""Update the graph widget dimensions and send to EnvironmentGraph class"""
 		self.graph_widget_width = allocation.width
 		self.graph_widget_height = allocation.height
 		self.ctrl.update_widget_dim(self.graph_widget_width, self.graph_widget_height)
 
 	def generate_graph(self, widget):
+		t = threading.Thread(target=self.thread_gen_graph)
+		t.start()
+
+
+	def thread_gen_graph(self):
 		self.ctrl.gen_graph()
 		self.redraw()
 
