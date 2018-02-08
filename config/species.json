@@ -12,6 +12,10 @@
       "FLORESTA"
     ],
     "spread_model": [
+      "SI",
+      "SIS"
+    ],
+    "state": [
       "S",
       "S"
     ]

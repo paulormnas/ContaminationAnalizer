@@ -17,13 +17,17 @@ class CEnvironmentGraph():
         self.connections = connections
         self.max_vertex = 5000
         self.v_total = 0
-        self.pixel_step = 15
+        self.pixel_step = 20
 
         self.names = []
         self.v_pos = []
         self.g.vertex_properties.position = self.g.new_vertex_property("vector<double>")
         self.g.vertex_properties.species = self.g.new_vertex_property("string")
-        # self.gen_graph()
+        self.g.vertex_properties.spread_model = self.g.new_vertex_property("vector<string>")
+        self.g.vertex_properties.group = self.g.new_vertex_property("vector<string>")
+        self.g.vertex_properties.habitat = self.g.new_vertex_property("vector<string>")
+        self.g.vertex_properties.state = self.g.new_vertex_property("vector<string>")
+        self.g.vertex_properties.state_color = self.g.new_vertex_property("vector<double>")
 
     def update_dimensions(self, ww, wh):
         # Update the widget dimensions where the graph is being drawn
@@ -101,33 +105,28 @@ class CEnvironmentGraph():
         self.v_total = v_count - 1
 
     def add_vertices(self):
-        # Create graph vertices and species properties for each vertex.
+        """
+        Create graph vertices and species properties for each vertex.
+        :return: None
+        :rtype: None
+        """
         self.g.add_vertex(self.v_total)
-        vprop_name = self.g.new_vertex_property("string")
-        vprop_spread_model = self.g.new_vertex_property("vector<string>")
-        vprop_group = self.g.new_vertex_property("vector<string>")
-        vprop_habitat = self.g.new_vertex_property("vector<string>")
-        vprop_state = self.g.new_vertex_property("vector<string>")
         vprop_pos = self.g.new_vertex_property("vector<double>")
 
         # Read the species properties from the JSON file and insert into vertex properties
-        for count in range(0, self.v_total, 1):
+        for v in self.g.vertices():
             n = randint(0, len(self.species) - 1)
             s = self.species[n]
+            self.g.vertex_properties.species[v] = s["species"]
+            self.g.vertex_properties.spread_model[v] = s["spread_model"]
+            self.g.vertex_properties.group[v] = s["group"]
+            self.g.vertex_properties.habitat[v] = s["habitat"]
+            self.g.vertex_properties.state[v] = s["state"]
+            self.g.vertex_properties.state_color[v] = (47 / 255, 174 / 255, 8 / 255, 0.8)  # Color for "S" state
 
-            vprop_name[count] = s["species"]
-            vprop_spread_model[count] = s["spread_model"]
-            vprop_group[count] = s["group"]
-            vprop_habitat[count] = s["habitat"]
-            # vprop_state = s["state"]
-            # print(self.v_pos[count])
+        for count in range(0, self.v_total, 1):
             vprop_pos[count] = self.v_pos[count]
 
-        self.g.vertex_properties.species = vprop_name
-        self.g.vertex_properties.spread_model = vprop_spread_model
-        self.g.vertex_properties.group = vprop_group
-        self.g.vertex_properties.habitat = vprop_habitat
-        self.g.vertex_properties.state = vprop_state
         self.g.vertex_properties.position = vprop_pos
 
     def add_edges(self):

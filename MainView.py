@@ -67,7 +67,7 @@ class CMainWindow(Gtk.Window):
 		button.connect("clicked", self.generate_graph)
 		config_box.add(button)
 
-		# A Box container that is set inside the NavigationBar to handle the buttons that controls the simulator
+		# A box container that is set inside the NavigationBar to handle the buttons that controls the simulator
 		# iterations
 		btn_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, homogeneous=True)
 		Gtk.StyleContext.add_class(btn_box.get_style_context(), "linked")
@@ -107,17 +107,26 @@ class CMainWindow(Gtk.Window):
 		# Add icon to scale
 		scl_img = Gtk.Image.new_from_file("icons/speed.png")
 
-		# New box to handle the scale and it's icon
+		# Box to handle the scale and it's icon
 		scl_box = Gtk.Box(orientation='GTK_ORIENTATION_HORIZONTAL', homogeneous=False)
 		scl_box.pack_start(scl_img, False, False, 0)
 		scl_box.pack_start(self.scale, True, True, 0)
 
-		# New box to handle the button's box and scale's box and add space between then
+		# Button that allow change the state of random species to infected
+		infect_btn = Gtk.Button(label='Infect')
+		infect_btn.connect("clicked", self.infect)
+
+		# Box to handle the scale and it's icon
+		infect_box = Gtk.Box(orientation='GTK_ORIENTATION_HORIZONTAL', homogeneous=False)
+		infect_box.pack_start(infect_btn, False, False, 0)
+
+		# Box to handle the button's box and scale's box and add space between then
 		hb_box_sim = Gtk.Box(orientation='GTK_ORIENTATION_HORIZONTAL', homogeneous=True, spacing=20)
 		hb_box_sim.pack_start(btn_box, True, False, 0)
 		hb_box_sim.pack_start(scl_box, True, True, 0)
+		hb_box_sim.pack_start(infect_box, True, True, 0)
 
-		# New box to handle the configuration buttons and separete then from the buttons that controls the simulation
+		# Box to handle the configuration buttons and separete then from the buttons that controls the simulation
 		hb_box_config = Gtk.Box(orientation='GTK_ORIENTATION_HORIZONTAL', homogeneous=True, spacing=20)
 		hb_box_config.add(config_box)
 
@@ -227,17 +236,15 @@ class CMainWindow(Gtk.Window):
 		return vbox
 
 	def add_notebook(self):
-
 		self.nb = Gtk.Notebook()
-
 		self.page_environment = Gtk.Overlay()
-
 		self.graph_widget = gtk_graph_draw.GraphWidgetWithBackImage(self.graph,
 		                                                            pos=self.graph.vertex_properties["position"],
 		                                                            vertex_size=20,
-		                                                            vertex_text=self.graph.vertex_properties.species,
+		                                                            # vertex_text=self.graph.vertex_properties.species,
 		                                                            vertex_text_position=-5,
 		                                                            vertex_font_size=12,
+		                                                            vertex_fill_color=self.graph.vertex_properties.state_color,
 		                                                            fit_view=True,
 		                                                            # edge_pen_width=self.graph.edge_properties["contaminationCriteria"],
 		                                                            edge_marker_size=10,
@@ -245,8 +252,8 @@ class CMainWindow(Gtk.Window):
 		                                                            bg_image=self.sf    #Only shapefiles are accepted
 		                                                            )
 		self.graph_widget.connect("size_allocate", self.size_allocate)
-
 		self.page_environment.add_overlay(self.graph_widget)
+		self.page_environment.set_overlay_pass_through(self.graph_widget, True)
 		# self.page_environment.add(Gtk.Label('Environment simulation page'))
 		self.nb.append_page(self.page_environment, Gtk.Label('Environment'))
 
@@ -254,9 +261,7 @@ class CMainWindow(Gtk.Window):
 		self.page_plot.set_border_width(10)
 		self.page_plot.add(Gtk.Label('A page with an image for a Title.'))
 		self.nb.append_page(self.page_plot,
-		                    Gtk.Image.new_from_icon_name("help-about", Gtk.IconSize.MENU)
-		                    )
-
+		                    Gtk.Image.new_from_icon_name("help-about", Gtk.IconSize.MENU))
 		self.horizontal_pane.add2(self.nb)
 
 	def add_statusbar(self):
@@ -342,3 +347,15 @@ class CMainWindow(Gtk.Window):
 		win = UpdateConnections.CUpdateConnections()
 		win.show_all()
 		win.set_keep_above(True)
+
+	def infect(self, widget):
+		"""
+		Handle the click event on a button to random infect a vertex on the drawn graph
+		:param widget: A widget that call a click event
+		:type widget: Gtk.Widget
+		:return: None
+		:rtype: None
+		"""
+		self.ctrl.random_infect_specie()
+		self.graph_widget.regenerate_surface(reset=True)
+		self.graph_widget.queue_draw()
