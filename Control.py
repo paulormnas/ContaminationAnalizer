@@ -3,7 +3,6 @@ import test_graph
 import SER
 import LoadData
 import SaveData
-import SpreadModels
 
 class CController():
 	"""
@@ -19,7 +18,6 @@ class CController():
 		self.env_graph = test_graph.CEnvironmentGraph(species=self.ld.read_species(),
 		                                              connections=self.ld.read_connections())
 		self.graph = self.env_graph.get_graph()
-		self.sirs = SpreadModels.CSIR(graph=self.graph)
 
 	def get_graph(self):
 		"""Get the graph that will be drawn in the environment page"""
@@ -75,10 +73,5 @@ class CController():
 		"""Use object from class SaveData to write connections specifications of each species to JSON file"""
 		self.sd.save_connections(data=data)
 
-	def random_infect_specie(self):
-		"""
-		Infect random species inserted on simulation graph by changing it's state.
-		:return: None
-		:rtype: None
-		"""
-		self.sirs.random_infect()
+	def random_infect_specie(self, graph):
+		self.ser.random_infect_specie(graph=graph)

@@ -2,9 +2,9 @@
   "Didelphis Marsupialis": [
     "Homo Sapiens"
   ],
+  "Homo Sapiens": [],
   "Triatoma Infestans": [
     "Didelphis Marsupialis",
     "Homo Sapiens"
-  ],
-  "Homo Sapiens": []
+  ]
 }

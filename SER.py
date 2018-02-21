@@ -1,11 +1,15 @@
 # coding=utf-8
 from graph_tool.all import *
 
+import SpreadModels
+
 class CSER:
 	"""This class is responsible for implement the Scheduling by Edge Reversal algorithm and control the simulation."""
 	def __init__(self):
+		self.sm = SpreadModels.CSIR()
 		self.sinks = []
 		self.iterations = 0
+		self.vertex_states = {}
 
 	def get_iterations_number(self):
 		return self.iterations
@@ -14,12 +18,14 @@ class CSER:
 		"""Verify if is a forward or backward step and revert the edges accordingly to each movement"""
 		if is_forward:
 			self.concurrency_measure(g)
+			self.save_vertex_state(graph=g)
 			self.iterations += 1
 		elif self.iterations > 0:
 			self.identify_last_sinks(g)
 			self.iterations -= 1
 
-		self.revert_edge(g, is_forward=is_forward)
+		self.revert_edge(graph=g, is_forward=is_forward)
+		self.spread_infection(graph=g, is_forward=is_forward)
 		return g
 
 	def reset(self, g):
@@ -28,21 +34,25 @@ class CSER:
 			g = self.run(g=g, is_forward=False)
 		return g
 
+	def save_vertex_state(self, graph):
+		states = {}
+		for v in graph.vertices():
+			states[graph.vertex_index[v]] = graph.vertex_properties.state[v]
+		self.vertex_states[self.iterations] = states
+
 	def concurrency_measure(self, graph):
 		"""Identify the vertices that are sink in this moment and create a list with they indexes."""
-		concurrency = 0
+		self.sinks = []
 		for v in graph.vertices():
 			if (v.in_degree() > 0) and (v.out_degree() == 0):
 				self.sinks.append(graph.vertex_index[v])
-				concurrency += 1
 
 	def identify_last_sinks(self, graph):
 		"""Identify the vertices that operated in the last iteration and create a list with they indexes."""
-		last_sink = 0
+		self.sinks = []
 		for v in graph.vertices():
 			if (v.out_degree() > 0) and (v.in_degree() == 0):
 				self.sinks.append(graph.vertex_index[v])
-				last_sink += 1
 
 	def revert_edge(self, graph, is_forward):
 		"""Revert all edges of all vertices in self.sinks list, regarding as a step forward or backward"""
@@ -65,4 +75,36 @@ class CSER:
 				# graph.edge_properties["contaminationCriteria"] = eprop_criterio
 				graph.remove_edge(old_edge)
 
-		self.sinks = []
+	def random_infect_specie(self, graph):
+		"""
+		Infect random species inserted on simulation graph by changing it's state.
+		:return: None
+		:rtype: None
+		"""
+		self.sm.random_infect(g=graph)
+
+	def spread_infection(self, graph, is_forward):
+		for source in self.sinks:  # After revert edges the sinks become sources
+			for index in range(0, len(graph.vertex_properties.state[source])):
+				# Verify if the source vertex is infected by Tc
+				if is_forward and graph.vertex_properties.state[source][index] == "I":
+					# If is a simulation step forward, than the infect spread from source to out neighbors
+					neighbors_list = graph.get_out_neighbors(source)
+					self.sm.infect(graph=graph,
+					               index=index,
+					               neighbors_list=neighbors_list,
+					               source=source,
+					               is_forward=is_forward,
+					               vertex_states=self.vertex_states,
+					               iteration=self.iterations)
+				elif not is_forward and graph.vertex_properties.state[source][index] == "I":
+					# If is a simulation step backward, than verify if need to recover the susceptible state of in
+					# neighbors
+					neighbors_list = graph.get_in_neighbors(source)
+					self.sm.infect(graph=graph,
+					               index=index,
+					               neighbors_list=neighbors_list,
+					               source=source,
+					               is_forward=is_forward,
+					               vertex_states=self.vertex_states,
+					               iteration=self.iterations)

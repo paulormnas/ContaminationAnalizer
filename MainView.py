@@ -58,7 +58,7 @@ class CMainWindow(Gtk.Window):
 		config_box.add(button)
 
 		button = Gtk.Button()
-		button.set_image(Gtk.Image.new_from_file("icons/species.png"))
+		button.set_image(Gtk.Image.new_from_file("icons/connections.png"))
 		button.connect("clicked", self.update_connections)
 		config_box.add(button)
 
@@ -356,6 +356,6 @@ class CMainWindow(Gtk.Window):
 		:return: None
 		:rtype: None
 		"""
-		self.ctrl.random_infect_specie()
+		self.ctrl.random_infect_specie(self.graph)
 		self.graph_widget.regenerate_surface(reset=True)
 		self.graph_widget.queue_draw()

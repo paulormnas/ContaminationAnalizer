@@ -122,7 +122,8 @@ class CEnvironmentGraph():
             self.g.vertex_properties.group[v] = s["group"]
             self.g.vertex_properties.habitat[v] = s["habitat"]
             self.g.vertex_properties.state[v] = s["state"]
-            self.g.vertex_properties.state_color[v] = (47 / 255, 174 / 255, 8 / 255, 0.8)  # Color for "S" state
+            # Color for susceptible (S) state
+            self.g.vertex_properties.state_color[v] = (186 / 255, 172 / 255, 18 / 255, 0.8)
 
         for count in range(0, self.v_total, 1):
             vprop_pos[count] = self.v_pos[count]
