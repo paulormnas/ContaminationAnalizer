@@ -142,7 +142,6 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
                  bg_image=None, max_render_time=300, layout_callback=None,
                  key_press_callback=None, highlight_color=None, **kwargs):
         r"""Interactive GTK+ widget displaying a given graph.
-
         Parameters
         ----------
         g : :class:`~graph_tool.Graph`
@@ -188,26 +187,19 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
         layout_callback : function (optional, default: ``Node``)
             User-supplied callback to be called whenever the positions of the layout
             have changed. It needs to have the following signature:
-
             .. code-block:: python
-
                def callback(g, picked, pos, vprops, eprops):
                    ...
-
             where ``g`` is the graph being drawn, ``picked`` is either a single
             vertex or a boolean vertex property map representing the vertices
             currently selected, and ``vprops`` and ``eprops`` are dictionaries with
             the vertex and edge properties currently being used by the layout.
         key_press_callback : function (optional, default: ``Node``)
-
             User-supplied callback to be called whenever a key-press event has
             happened. It needs to have the following signature:
-
             .. code-block:: python
-
                def callback(g, keyval, picked, pos, vprops, eprops):
                    ...
-
             where ``g`` is the graph being drawn, ``keyval`` is the key id,
             ``picked`` is either a single vertex or a boolean vertex property map
             representing the vertices currently selected, and ``vprops`` and
@@ -223,10 +215,8 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
             parameter.
         **kwargs
             Any extra parameters are passed to :func:`~graph_tool.draw.cairo_draw`.
-
         Notes
         -----
-
         The graph drawing can be panned by dragging with the middle mouse button
         pressed. The graph may be zoomed by scrolling with the mouse wheel, or
         equivalent (if the "shift" key is held, the vertex/edge sizes are scaled
@@ -236,7 +226,6 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
         rotation transformations are applied to the vertex positions themselves, and
         the transformation matrix is reset (if this is never done, the given
         position properties are never modified).
-
         Individual vertices may be selected by pressing the left mouse button. The
         currently selected vertex follows the mouse pointer. To stop the selection,
         the right mouse button must be pressed. Alternatively, a group of vertices
@@ -245,10 +234,8 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
         dragging the pointer with the left button pressed. They may be rotated by
         holding the "control" key and scrolling with the mouse. If the key "z" is
         pressed, the layout is zoomed to fit the selected vertices only.
-
         If the key "s" is pressed, the dynamic spring-block layout is
         activated. Vertices which are currently selected are not updated.
-
         """
 
         Gtk.DrawingArea.__init__(self)
@@ -856,8 +843,8 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
     def fit_to_window(self, ink=False, g=None):
         r"""Fit graph to image, if there is a background image, otherwise fit the graph to window."""
         geometry = [self.img_width * self.scale_xy, self.img_height * self.scale_xy]
-        ox = self.left + self.widget_pos_x
-        oy = self.top + self.widget_pos_y
+        ox = 0
+        oy = 0
         if g is None:
             g = self.g
         pos = g.own_property(self.pos)
@@ -1267,11 +1254,11 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
         self.smatrix = self.smatrix.multiply(m)
         self.queue_draw()
 
+
 class GraphWindow(Gtk.Window):
     def __init__(self, g, pos, geometry, vprops=None, eprops=None, vorder=None,
                  eorder=None, nodesfirst=False, update_layout=False, bg_image=None, **kwargs):
         r"""Interactive GTK+ window containing a :class:`~graph_tool.draw.GraphWidget`.
-
         Parameters
         ----------
         g : :class:`~graph_tool.Graph`
@@ -1314,86 +1301,79 @@ class GraphWindow(Gtk.Window):
 
     def __del__(self):
         self.graph.cleanup()
+    _window_list = []
 
-
-_window_list = []
-
-def interactive_window(g, pos=None, vprops=None, eprops=None, vorder=None,
-                       eorder=None, nodesfirst=False, geometry=(500, 400),
-                       update_layout=True, async=False, no_main=False, bg_image=None, **kwargs):
-    r"""
-    Display an interactive GTK+ window containing the given graph.
-
-    Parameters
-    ----------
-    g : :class:`~graph_tool.Graph`
-        Graph to be drawn.
-    pos : :class:`~graph_tool.PropertyMap` (optional, default: ``None``)
-        Vector-valued vertex property map containing the x and y coordinates of
-        the vertices. If not given, it will be computed using :func:`sfdp_layout`.
-    vprops : dict (optional, default: ``None``)
-        Dictionary with the vertex properties. Individual properties may also be
-        given via the ``vertex_<prop-name>`` parameters, where ``<prop-name>`` is
-        the name of the property.
-    eprops : dict (optional, default: ``None``)
-        Dictionary with the vertex properties. Individual properties may also be
-        given via the ``edge_<prop-name>`` parameters, where ``<prop-name>`` is
-        the name of the property.
-    vorder : :class:`~graph_tool.PropertyMap` (optional, default: ``None``)
-        If provided, defines the relative order in which the vertices are drawn.
-    eorder : :class:`~graph_tool.PropertyMap` (optional, default: ``None``)
-        If provided, defines the relative order in which the edges are drawn.
-    nodesfirst : bool (optional, default: ``False``)
-        If ``True``, the vertices are drawn first, otherwise the edges are.
-    geometry : tuple (optional, default: ``(500, 400)``)
-        Window geometry.
-    update_layout : bool (optional, default: ``True``)
-        If ``True``, the layout will be updated dynamically.
-    async : bool (optional, default: ``False``)
-        If ``True``, run asynchronously. (Requires :mod:`IPython`)
-    no_main : bool (optional, default: ``False``)
-        If ``True``, the GTK+ main loop will not be called.
-    **kwargs
-        Any extra parameters are passed to :class:`~graph_tool.draw.GraphWindow`,
-        :class:`~graph_tool.draw.GraphWidget` and :func:`~graph_tool.draw.cairo_draw`.
-
-    Returns
-    -------
-    pos : :class:`~graph_tool.PropertyMap`
-        Vector vertex property map with the x and y coordinates of the vertices.
-    selected : :class:`~graph_tool.PropertyMap` (optional, only if ``output is None``)
-        Boolean-valued vertex property map marking the vertices which were
-        selected interactively.
-
-    Notes
-    -----
-
-    See documentation of :class:`~graph_tool.draw.GraphWidget` for key bindings
-    information.
-
-    """
-    if pos is None:
-        if update_layout:
-            pos = random_layout(g, [1, 1])
-        else:
-            pos = sfdp_layout(g)
-    win = GraphWindow(g, pos, geometry, vprops, eprops, vorder, eorder,
-                      nodesfirst, update_layout, bg_image=bg_image, **kwargs)
-    win.show_all()
-    _window_list.append(win)
-    if not no_main:
-        if async:
-            # just a placeholder for a proper main loop integration with gtk3 when
-            # ipython implements it
-            import IPython.lib.inputhook
-            f = lambda: Gtk.main_iteration_do(False)
-            IPython.lib.inputhook.set_inputhook(f)
-        else:
-            def destroy_callback(*args, **kwargs):
-                global _window_list
-                for w in _window_list:
-                    w.destroy()
-                Gtk.main_quit()
-            win.connect("delete_event", destroy_callback)
-            Gtk.main()
-    return pos, win.graph.selected.copy()
+    def interactive_window(g, pos=None, vprops=None, eprops=None, vorder=None,
+                           eorder=None, nodesfirst=False, geometry=(500, 400),
+                           update_layout=True, async=False, no_main=False, bg_image=None, **kwargs):
+        r"""
+        Display an interactive GTK+ window containing the given graph.
+        Parameters
+        ----------
+        g : :class:`~graph_tool.Graph`
+            Graph to be drawn.
+        pos : :class:`~graph_tool.PropertyMap` (optional, default: ``None``)
+            Vector-valued vertex property map containing the x and y coordinates of
+            the vertices. If not given, it will be computed using :func:`sfdp_layout`.
+        vprops : dict (optional, default: ``None``)
+            Dictionary with the vertex properties. Individual properties may also be
+            given via the ``vertex_<prop-name>`` parameters, where ``<prop-name>`` is
+            the name of the property.
+        eprops : dict (optional, default: ``None``)
+            Dictionary with the vertex properties. Individual properties may also be
+            given via the ``edge_<prop-name>`` parameters, where ``<prop-name>`` is
+            the name of the property.
+        vorder : :class:`~graph_tool.PropertyMap` (optional, default: ``None``)
+            If provided, defines the relative order in which the vertices are drawn.
+        eorder : :class:`~graph_tool.PropertyMap` (optional, default: ``None``)
+            If provided, defines the relative order in which the edges are drawn.
+        nodesfirst : bool (optional, default: ``False``)
+            If ``True``, the vertices are drawn first, otherwise the edges are.
+        geometry : tuple (optional, default: ``(500, 400)``)
+            Window geometry.
+        update_layout : bool (optional, default: ``True``)
+            If ``True``, the layout will be updated dynamically.
+        async : bool (optional, default: ``False``)
+            If ``True``, run asynchronously. (Requires :mod:`IPython`)
+        no_main : bool (optional, default: ``False``)
+            If ``True``, the GTK+ main loop will not be called.
+        **kwargs
+            Any extra parameters are passed to :class:`~graph_tool.draw.GraphWindow`,
+            :class:`~graph_tool.draw.GraphWidget` and :func:`~graph_tool.draw.cairo_draw`.
+        Returns
+        -------
+        pos : :class:`~graph_tool.PropertyMap`
+            Vector vertex property map with the x and y coordinates of the vertices.
+        selected : :class:`~graph_tool.PropertyMap` (optional, only if ``output is None``)
+            Boolean-valued vertex property map marking the vertices which were
+            selected interactively.
+        Notes
+        -----
+        See documentation of :class:`~graph_tool.draw.GraphWidget` for key bindings
+        information.
+        """
+        if pos is None:
+            if update_layout:
+                pos = random_layout(g, [1, 1])
+            else:
+                pos = sfdp_layout(g)
+        win = GraphWindow(g, pos, geometry, vprops, eprops, vorder, eorder,
+                          nodesfirst, update_layout, bg_image=bg_image, **kwargs)
+        win.show_all()
+        _window_list.append(win)
+        if not no_main:
+            if async:
+                # just a placeholder for a proper main loop integration with gtk3 when
+                # ipython implements it
+                import IPython.lib.inputhook
+                f = lambda: Gtk.main_iteration_do(False)
+                IPython.lib.inputhook.set_inputhook(f)
+            else:
+                def destroy_callback(*args, **kwargs):
+                    global _window_list
+                    for w in _window_list:
+                        w.destroy()
+                    Gtk.main_quit()
+                win.connect("delete_event", destroy_callback)
+                Gtk.main()
+        return pos, win.graph.selected.copy()

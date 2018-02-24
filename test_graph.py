@@ -19,7 +19,7 @@ class CEnvironmentGraph():
         self.w_height = 0
         self.max_vertex = 5000
         self.v_total = 0
-        self.pixel_step = 20
+        self.pixel_step = 15
 
         self.names = []
         self.v_pos = []
@@ -31,11 +31,14 @@ class CEnvironmentGraph():
         self.g.vertex_properties.state = self.g.new_vertex_property("vector<string>")
         self.g.vertex_properties.state_color = self.g.new_vertex_property("vector<double>")
 
-    def update_dimensions(self, ww, wh):
+    def update_dimensions(self, ww, wh, wx, wy):
         # Update the widget dimensions where the graph is being drawn
         self.w_width = ww
         self.w_height = wh
-        print("Updated dimensions", ww, wh)
+        self.w_pos_x = wx
+        self.w_pos_y = wy
+        # print("Updated dimensions", ww, wh)
+        # print("Widget start position", wx, wy)
 
     def read_shapes(self, sf):
         self.sf = shapefile.Reader(sf)
@@ -53,28 +56,36 @@ class CEnvironmentGraph():
 
     def calc_pos(self):
         """ Set the vertices positions"""
-        width_ratio = float(self.w_width) / float(self.w_width / 4)
-        height_ratio = float(self.w_height) / float(self.w_height / 3)
-        scale_xy = min(width_ratio, height_ratio)
+        img_width = self.w_width / 4
+        img_height = self.w_height / 3
+        width_ratio = float(self.w_width) / float(img_width)
+        height_ratio = float(self.w_height) / float(img_height)
+        self.scale_xy = min(width_ratio, height_ratio)
+
+        top = int((self.w_height / 2) - (img_height * self.scale_xy / 2))
+        left = int((self.w_width / 2) - (img_width * self.scale_xy / 2))
+        offset = (left + self.w_pos_y, top + self.w_pos_y)
 
         v_count = 0
-        # for i in range(len(self.shapes)):
-        for i in range(0, 1):
+        for i in range(len(self.shapes)):
+            print(self.shapes[i].parts)
+            progress = int(100 * i / len(self.shapes))
+            print("Progress: " + str(progress) + "%")
+        # for i in range(0, 1):
             if v_count < self.max_vertex:
                 coords = self.shapes[i].points
                 x_max, x_min, y_max, y_min = coords[0][0], coords[0][0], coords[0][1], coords[0][1]
                 # Find maximum and minimum value of shapes coordinates
-                for i in range(len(coords)):
-                    if coords[i][0] > x_max:
-                        x_max = coords[i][0]
-                    if coords[i][0] < x_min:
-                        x_min = coords[i][0]
+                for j in range(len(coords)):
+                    if coords[j][0] > x_max:
+                        x_max = coords[j][0]
+                    if coords[j][0] < x_min:
+                        x_min = coords[j][0]
 
-                    if coords[i][1] > y_max:
-                        y_max = coords[i][1]
-                    if coords[i][1] < y_min:
-                        y_min = coords[i][1]
-                # print(x_max, x_min, y_max, y_min)
+                    if coords[j][1] > y_max:
+                        y_max = coords[j][1]
+                    if coords[j][1] < y_min:
+                        y_min = coords[j][1]
 
                 # Normalize maximum and minimum values of shape coordinates and convert to widget dimensions
                 x_max_norm = (x_max - self.x1) / (self.x2 - self.x1)
@@ -84,32 +95,40 @@ class CEnvironmentGraph():
 
                 x_max = int((x_max_norm * self.w_width) / 4)
                 x_min = int((x_min_norm * self.w_width) / 4)
-                y_max = int((y_max_norm * self.w_height) / 3)
-                y_min = int((y_min_norm * self.w_height) / 3)
+                y_min = int((self.w_height - (y_max_norm * self.w_height)) / 3)
+                y_max = int((self.w_height - (y_min_norm * self.w_height)) / 3)
 
                 # Set coordinates where the vertices should be drawn
-                for column in range(0, int(self.w_width / 4), self.pixel_step):
+                for column in range(y_min, y_max, self.pixel_step):
                     if v_count < self.max_vertex:
-                        for row in range(0, int(self.w_height / 3), self.pixel_step):
-                            # print(x_min, column, x_max, y_min, row, y_max)
-                            # if self.is_inside(coords, len(coords) - 1, list(column, row)):
-                            #     if v_count < self.max_vertex and [column, row] not in self.v_pos:
-                            #         self.v_pos.append([column, row])
-                            #         v_count += 1
-                            #     else:
-                            #         break
-                            if x_min <= column <= x_max and y_min <= row <= y_max:
+                        for row in range(x_min, x_max, self.pixel_step):
+                            # print(self.is_inside(coords, len(coords) - 1, list([column, row])))
+                            if self.is_inside(coords, len(coords) - 1, list([column, row]), self.shapes[i]) == 1:
                                 if v_count < self.max_vertex and [column, row] not in self.v_pos:
-                                    self.v_pos.append([column, row])
+                                    self.v_pos.append([(column * self.scale_xy) + offset[0],
+                                                       (row * self.scale_xy) + offset[1]])
                                     v_count += 1
                                 else:
                                     break
+                            # if x_min <= column <= x_max and y_min <= row <= y_max:
+                                # if v_count < self.max_vertex and [column, row] not in self.v_pos:
+                                #     self.v_pos.append([(column * self.scale_xy) + offset[0],
+                                #                        (row * self.scale_xy) + offset[1]])
+                                #     # self.v_pos.append([column, row])
+                                #     # print("Coordinates:", column, row)
+                                #     v_count += 1
+                                # else:
+                                #     break
                     else:
                         break
             else:
                 break
         print("Vertices total:", v_count)
-        self.v_total = v_count - 1
+        if v_count == 0:
+            self.v_total = v_count
+        else:
+            self.v_total = v_count - 1
+
 
     @staticmethod
     def on_segment(p, r, q):
@@ -201,7 +220,7 @@ class CEnvironmentGraph():
 
         return False  # Doesn't fall in any of the above cases
 
-    def is_inside(self, polygon, n, p):
+    def is_inside(self, polygon, n, p, shape):
         """
         Returns true if the point p lies inside the polygon[] with n vertices
         :param polygon: List of x and y coordinates that compose the polygon
@@ -210,6 +229,8 @@ class CEnvironmentGraph():
         :type n: int
         :param p: Point to verify if is inside of polygon
         :type p: list
+        :param shape: Object with information about the polygon to check if the point is within
+        :type shape: object
         :return: Return True if the number of intersections is odd, which means the point is inside the polygon,
         False otherwise
         :rtype: bool
@@ -224,25 +245,34 @@ class CEnvironmentGraph():
         # Count intersections of the above line with sides of polygon
         count = 0
         i = 0
+        # print(shape.parts)
         while True:
             next = (i+1) % n
-            p1 = polygon[i]
-            q1 = polygon[next]
+            if next in shape.parts and next != 0:
+                next += 1
+                i += 1
+            p1 = list(polygon[i])
+            q1 = list(polygon[next])
 
-            # Normalize maximum and minimum values of shape coordinates and convert to widget dimensions
+            # Normalize values of shape coordinates and convert to widget dimensions
             p1[0] = (p1[0] - self.x1) / (self.x2 - self.x1)
             p1[1] = (p1[1] - self.y1) / (self.y2 - self.y1)
             q1[0] = (q1[0] - self.x1) / (self.x2 - self.x1)
             q1[1] = (q1[1] - self.y1) / (self.y2 - self.y1)
 
+            p1[0] = (p1[0] * self.w_width) / 4
+            p1[1] = (self.w_height - (p1[1] * self.w_height)) / 3
+            q1[0] = (q1[0] * self.w_width) / 4
+            q1[1] = (self.w_height - (q1[1] * self.w_height)) / 3
+
             # Check if the line segment from 'p' to 'extreme' intersects
             # with the line segment from 'polygon[i]' to 'polygon[next]'
-            if self.do_intersect(polygon[i], polygon[next], p, extreme):
+            if self.do_intersect(p1, q1, p, extreme):
                 # If the point 'p' is collinear with line segment 'i-next',
                 # then check if it lies on segment. If it lies, return true,
                 # otherwise false
-                if self.orientation(polygon[i], p, polygon[next]) == 0:
-                    return self.on_segment(polygon[i], polygon[next], p)
+                if self.orientation(p1, q1, p) == 0:
+                    return self.on_segment(p1, q1, p)
                 count += 1
             i = next
             if i == 0:
@@ -282,7 +312,7 @@ class CEnvironmentGraph():
         # between vertices.
         count = 0
         total = 0
-        dist_max = self.pixel_step  # Maximum acceptable distance between two vertices to create an edge.
+        dist_max = self.pixel_step * self.scale_xy  # Maximum acceptable distance between two vertices to create an edge.
         for s in self.connections:
             vertex_list = []
             pos_list = []

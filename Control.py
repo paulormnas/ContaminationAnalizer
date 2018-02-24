@@ -26,8 +26,8 @@ class CController():
 	def set_shapefile(self, sf):
 		self.env_graph.read_shapes(sf)
 
-	def update_widget_dim(self, w_width, w_height):
-		self.env_graph.update_dimensions(w_width, w_height)
+	def update_widget_dim(self, w_width, w_height, w_pos_x, w_pos_y):
+		self.env_graph.update_dimensions(w_width, w_height, w_pos_x, w_pos_y)
 
 	def gen_graph(self):
 		self.env_graph.gen_graph()
