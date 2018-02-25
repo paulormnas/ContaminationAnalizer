@@ -341,6 +341,14 @@ class CEnvironmentGraph():
             count = 0
         print("Total:", total)
 
+    def get_groups(self):
+        available_groups = []
+        for s in self.species:
+            for group in s["group"]:
+                if group not in available_groups:
+                    available_groups.append(group)
+        return available_groups
+
     def get_graph(self):
         """Return the graph object"""
         return self.g

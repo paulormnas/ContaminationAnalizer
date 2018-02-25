@@ -120,13 +120,19 @@ class CMainWindow(Gtk.Window):
 		infect_box = Gtk.Box(orientation='GTK_ORIENTATION_HORIZONTAL', homogeneous=False)
 		infect_box.pack_start(infect_btn, False, False, 0)
 
+		# Combobox to select the group to be observed on the map. For example, by selecting group TcI the user can
+		# see the state of all species that can be infected by TcI.
+		self.group_combo = Gtk.ComboBoxText()
+		self.group_combo.connect("changed", self.on_group_combo_changed)
+
 		# Box to handle the button's box and scale's box and add space between then
 		hb_box_sim = Gtk.Box(orientation='GTK_ORIENTATION_HORIZONTAL', homogeneous=True, spacing=20)
 		hb_box_sim.pack_start(btn_box, True, False, 0)
 		hb_box_sim.pack_start(scl_box, True, True, 0)
 		hb_box_sim.pack_start(infect_box, True, True, 0)
+		hb_box_sim.pack_start(self.group_combo, True, True, 0)
 
-		# Box to handle the configuration buttons and separete then from the buttons that controls the simulation
+		# Box to handle the configuration buttons and separate then from the buttons that controls the simulation
 		hb_box_config = Gtk.Box(orientation='GTK_ORIENTATION_HORIZONTAL', homogeneous=True, spacing=20)
 		hb_box_config.add(config_box)
 
@@ -290,7 +296,18 @@ class CMainWindow(Gtk.Window):
 
 	def thread_gen_graph(self):
 		self.ctrl.gen_graph()
+		self.update_combobox()
 		self.redraw()
+
+	def update_combobox(self):
+		"""Add items to group combobox on toolbar of the MainView"""
+		groups = self.ctrl.get_available_groups()
+		for item in groups:
+			print(item)
+			self.group_combo.append_text(item)
+
+	def on_group_combo_changed(self, widget):
+		print(widget.get_active_text())
 
 	def key_press_event(self, widget, event):
 		"""Handle key press."""

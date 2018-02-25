@@ -75,3 +75,6 @@ class CController():
 
 	def random_infect_specie(self, graph):
 		self.ser.random_infect_specie(graph=graph)
+
+	def get_available_groups(self):
+		return self.env_graph.get_groups()
