@@ -78,12 +78,8 @@ class CSIR:
 					# If is a simulation step backward, than recover the state of each neighbor on last iteration
 					states = vertex_states[iteration]
 					state = states[graph.vertex_index[n]]
-					print("State_Before:", graph.vertex_properties.state[n][n_index])
 					graph.vertex_properties.state[n][n_index] = state[n_index]
-					print("State read from dict:", state[n_index])
-					print("State_After:", graph.vertex_properties.state[n][n_index])
-					color = _colors_defaults[state[n_index]]
-					graph.vertex_properties.state_color[n] = color
+					graph.vertex_properties.state_color[n] = _colors_defaults[state[n_index]]
 
 	def si(self, graph, s, v, s_index, v_index):
 		if random() < self.x and graph.vertex_properties.state[s][s_index] == "I" and \
