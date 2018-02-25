@@ -13,9 +13,9 @@ _colors_defaults = {
 class CSIR:
 	def __init__(self):
 		# SIRS dynamics parameters:
-		self.x = 0.001  # spontaneous outbreak probability
-		self.r = 0.1  # I->R probability
-		self.s = 0.01  # R->S probability
+		self.x = 0.1  # spontaneous outbreak probability
+		self.r = 0.001  # I->R probability
+		self.s = 0.1  # R->S probability
 		self.sinks = []
 
 	def random_infect(self, g):
@@ -37,27 +37,45 @@ class CSIR:
 				g.vertex_properties.state[v][0] = "I"
 				break
 
-	def infect(self, graph, index, neighbors_list, source, is_forward, vertex_states, iteration):
-		for n in neighbors_list:
-			# Verify if neighbor can be infected by same type of Tc being spread from source vertex
-			group = graph.vertex_properties.group[source][index]  # Identify the type of Tc
-			if group in graph.vertex_properties.group[n]:
-				group_list = list(graph.vertex_properties.group[n])
-				n_index = group_list.index(group)
-				if is_forward:
+	def infect(self, graph, index, source, is_forward, vertex_states, iteration):
+		group = graph.vertex_properties.group[source][index]  # Identify the type of Tc
+		if is_forward:
+			# If is a simulation step forward, than the infect spread from source to out neighbors, respecting the
+			# spread model of each group.
+			neighbors_list = graph.get_out_neighbors(source)
+			for n in neighbors_list:
+				if group in graph.vertex_properties.group[n]:
+					group_list = list(graph.vertex_properties.group[n])
+					n_index = group_list.index(group)
 					if graph.vertex_properties.spread_model[n][n_index] == "SI":
-						#  TODO: fix step backward infection
 						# Infect neighbor using SI model
 						self.si(graph=graph,
+						        s=source,
 						        v=n,
-						        index=n_index)
-
-						#  TODO: Implement others spread models
-					# if graph.vertex_properties.spread_model[n][nindex] is "SIS":
-					# 	self.sm.sis()  # Infect neighbor using SIS model
-					# if graph.vertex_properties.spread_model[n][nindex] is "SIR":
-					# 	self.sm.sir()  # Infect neighbor using SIR model
-				else:
+						        s_index=index,
+						        v_index=n_index)
+					if graph.vertex_properties.spread_model[n][n_index] == "SIS":
+						# Infect neighbor using SIS model
+						self.sis(graph=graph,
+						         s=source,
+						         v=n,
+						         s_index=index,
+						         v_index=n_index)
+					if graph.vertex_properties.spread_model[n][n_index] == "SIR":
+						# Infect neighbor using SIR model
+						self.sir(graph=graph,
+						         s=source,
+						         v=n,
+						         s_index=index,
+						         v_index=n_index)
+		else:
+			#  TODO: fix step backward infection
+			neighbors_list = graph.get_in_neighbors(source)
+			for n in neighbors_list:
+				if group in graph.vertex_properties.group[n]:
+					group_list = list(graph.vertex_properties.group[n])
+					n_index = group_list.index(group)
+					# If is a simulation step backward, than recover the state of each neighbor on last iteration
 					states = vertex_states[iteration]
 					state = states[graph.vertex_index[n]]
 					print("State_Before:", graph.vertex_properties.state[n][n_index])
@@ -67,6 +85,27 @@ class CSIR:
 					color = _colors_defaults[state[n_index]]
 					graph.vertex_properties.state_color[n] = color
 
-	def si(self, graph, v, index):
-		graph.vertex_properties.state[v][index] = "I"
-		graph.vertex_properties.state_color[v] = _colors_defaults["I"]
+	def si(self, graph, s, v, s_index, v_index):
+		if random() < self.x and graph.vertex_properties.state[s][s_index] == "I" and \
+				graph.vertex_properties.state[v][v_index] == "S":
+			graph.vertex_properties.state[v][v_index] = "I"
+			graph.vertex_properties.state_color[v] = _colors_defaults["I"]
+
+	def sis(self, graph, s, v, s_index, v_index):
+		if graph.vertex_properties.state[s][s_index] == "I":
+			if random() < self.x and graph.vertex_properties.state[v][v_index] == "S":
+				graph.vertex_properties.state[v][v_index] = "I"
+				graph.vertex_properties.state_color[v] = _colors_defaults["I"]
+			if random() < self.s:
+				graph.vertex_properties.state[v][s_index] = "S"
+				graph.vertex_properties.state_color[v] = _colors_defaults["S"]
+
+	def sir(self, graph, s, v, s_index, v_index):
+		if graph.vertex_properties.state[s][s_index] == "I":
+			if random() < self.x and graph.vertex_properties.state[v][v_index] == "S":
+				graph.vertex_properties.state[v][v_index] = "I"
+				graph.vertex_properties.state_color[v] = _colors_defaults["I"]
+			if random() < self.r:
+				graph.vertex_properties.state[v][s_index] = "R"
+				graph.vertex_properties.state_color[v] = _colors_defaults["R"]
+

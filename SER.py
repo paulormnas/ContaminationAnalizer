@@ -86,25 +86,9 @@ class CSER:
 	def spread_infection(self, graph, is_forward):
 		for source in self.sinks:  # After revert edges the sinks become sources
 			for index in range(0, len(graph.vertex_properties.state[source])):
-				# Verify if the source vertex is infected by Tc
-				if is_forward and graph.vertex_properties.state[source][index] == "I":
-					# If is a simulation step forward, than the infect spread from source to out neighbors
-					neighbors_list = graph.get_out_neighbors(source)
-					self.sm.infect(graph=graph,
-					               index=index,
-					               neighbors_list=neighbors_list,
-					               source=source,
-					               is_forward=is_forward,
-					               vertex_states=self.vertex_states,
-					               iteration=self.iterations)
-				elif not is_forward and graph.vertex_properties.state[source][index] == "I":
-					# If is a simulation step backward, than verify if need to recover the susceptible state of in
-					# neighbors
-					neighbors_list = graph.get_in_neighbors(source)
-					self.sm.infect(graph=graph,
-					               index=index,
-					               neighbors_list=neighbors_list,
-					               source=source,
-					               is_forward=is_forward,
-					               vertex_states=self.vertex_states,
-					               iteration=self.iterations)
+				self.sm.infect(graph=graph,
+				               index=index,
+				               source=source,
+				               is_forward=is_forward,
+				               vertex_states=self.vertex_states,
+				               iteration=self.iterations)
