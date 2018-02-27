@@ -78,3 +78,6 @@ class CController():
 
 	def get_available_groups(self):
 		return self.env_graph.get_groups()
+
+	def update_color_state(self, group):
+		self.env_graph.upd_state(group)

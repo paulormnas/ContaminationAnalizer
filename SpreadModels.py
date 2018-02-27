@@ -6,7 +6,8 @@ import numpy
 _colors_defaults = {
 	"S": (186 / 255, 172 / 255, 18 / 255, 0.8),
 	"I": (196 / 255, 23 / 255, 23 / 255, 0.8),
-	"R": (47 / 255, 174 / 255, 8 / 255, 0.8)
+	"R": (47 / 255, 174 / 255, 8 / 255, 0.8),
+	"IM": (8 / 255, 47 / 255, 208 / 255, 0.8)
 }
 
 
@@ -17,6 +18,10 @@ class CSIR:
 		self.r = 0.001  # I->R probability
 		self.s = 0.1  # R->S probability
 		self.sinks = []
+
+	@staticmethod
+	def get_state_color(state):
+		return _colors_defaults[state]
 
 	def random_infect(self, g):
 		"""

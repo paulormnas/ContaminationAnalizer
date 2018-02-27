@@ -1,10 +1,12 @@
 # coding=utf-8
-from graph_tool.all import *
+import math
 from random import *
 
-import LoadData
-import math
+from graph_tool.all import *
+
+import SpreadModels
 import shapefile
+
 
 class CEnvironmentGraph():
     """This class instantiate a graph-tool.Graph object and set the vertex and edge properties accordingly
@@ -68,7 +70,8 @@ class CEnvironmentGraph():
 
         v_count = 0
         for i in range(len(self.shapes)):
-            print(self.shapes[i].parts)
+            print("Shape:", i)
+            print("Parts:", self.shapes[i].parts)
             progress = int(100 * i / len(self.shapes))
             print("Progress: " + str(progress) + "%")
         # for i in range(0, 1):
@@ -352,3 +355,24 @@ class CEnvironmentGraph():
     def get_graph(self):
         """Return the graph object"""
         return self.g
+
+    def upd_state(self, group):
+        """
+        Change the colors of the vertices based on the Tc group to be shown to the user.
+        :param group: A string with the Tc group that should be represented by the vertices colors
+        :type group: str
+        :return: None
+        :rtype: None
+        """
+        for v in self.g.get_vertices():
+            if group in self.g.vertex_properties.group[v]:
+                # If the vertex can be infect by the Tc group passed as parameter, than change the color of the vertex
+                # to correspond to it state
+                group_list = list(self.g.vertex_properties.group[v])
+                index = group_list.index(group)
+                state = self.g.vertex_properties.state[v][index]
+                color = SpreadModels.CSIR.get_state_color(state)
+                self.g.vertex_properties.state_color[v] = color
+            else:
+                # Else, paint vertex with a neutral color to represent that it can not be infected by that group.
+                self.g.vertex_properties.state_color[v] = SpreadModels.CSIR.get_state_color("IM")

@@ -21,6 +21,7 @@ class CMainWindow(Gtk.Window):
 		self.ctrl = Control.CController()
 		self.ctrl.set_shapefile(self.sf)
 		self.graph = self.ctrl.get_graph()
+		self.graph_widget = None
 		self.is_running = False # Attribute to control thread activity
 
 		# Program main window.
@@ -124,6 +125,7 @@ class CMainWindow(Gtk.Window):
 		# see the state of all species that can be infected by TcI.
 		self.group_combo = Gtk.ComboBoxText()
 		self.group_combo.connect("changed", self.on_group_combo_changed)
+		self.update_combobox()
 
 		# Box to handle the button's box and scale's box and add space between then
 		hb_box_sim = Gtk.Box(orientation='GTK_ORIENTATION_HORIZONTAL', homogeneous=True, spacing=20)
@@ -293,21 +295,22 @@ class CMainWindow(Gtk.Window):
 		t = threading.Thread(target=self.thread_gen_graph)
 		t.start()
 
-
 	def thread_gen_graph(self):
 		self.ctrl.gen_graph()
-		self.update_combobox()
 		self.redraw()
 
 	def update_combobox(self):
 		"""Add items to group combobox on toolbar of the MainView"""
 		groups = self.ctrl.get_available_groups()
 		for item in groups:
-			print(item)
 			self.group_combo.append_text(item)
+		self.group_combo.set_active(0)
 
-	def on_group_combo_changed(self, widget):
-		print(widget.get_active_text())
+	def on_group_combo_changed(self, cb):
+		print(cb.get_active_text())
+		self.ctrl.update_color_state(cb.get_active_text())
+		if self.graph_widget is not None:
+			self.redraw()
 
 	def key_press_event(self, widget, event):
 		"""Handle key press."""
