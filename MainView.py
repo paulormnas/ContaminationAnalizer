@@ -307,7 +307,6 @@ class CMainWindow(Gtk.Window):
 		self.group_combo.set_active(0)
 
 	def on_group_combo_changed(self, cb):
-		print(cb.get_active_text())
 		self.ctrl.update_color_state(cb.get_active_text())
 		if self.graph_widget is not None:
 			self.redraw()
@@ -330,13 +329,15 @@ class CMainWindow(Gtk.Window):
 	def step_backward(self, widget):
 		"""Execute one step backward in SER simulation"""
 		if not self.is_running:
-			self.graph = self.ctrl.step_backward(self.graph)
+			self.graph = self.ctrl.step_backward(graph=self.graph,
+			                                     group_observed=self.group_combo.get_active_text())
 			self.redraw()
 
 	def step_forward(self, widget):
 		"""Execute one step forward in SER simulation"""
 		if not self.is_running:
-			self.graph = self.ctrl.step_forward(self.graph)
+			self.graph = self.ctrl.step_forward(graph=self.graph,
+			                                    group_observed=self.group_combo.get_active_text())
 			self.redraw()
 
 	def run_continuously(self, widget):
@@ -353,7 +354,8 @@ class CMainWindow(Gtk.Window):
 	def threaded_step_forward(self):
 		"""Execute step forward continuously in SER simulation inside a thread"""
 		while self.is_running:
-			self.graph = self.ctrl.step_forward(self.graph)
+			self.graph = self.ctrl.step_forward(graph=self.graph,
+			                                    group_observed=self.group_combo.get_active_text())
 			GObject.idle_add(self.redraw)
 			time.sleep(3 / self.scale.get_value())
 
@@ -383,6 +385,7 @@ class CMainWindow(Gtk.Window):
 		:return: None
 		:rtype: None
 		"""
-		self.ctrl.random_infect_specie(self.graph)
+		self.ctrl.random_infect_specie(graph=self.graph,
+		                               group=self.group_combo.get_active_text())
 		self.graph_widget.regenerate_surface(reset=True)
 		self.graph_widget.queue_draw()

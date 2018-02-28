@@ -35,13 +35,13 @@ class CController():
 	def get_iterations(self):
 		return self.ser.get_iterations_number()
 
-	def step_backward(self, graph):
+	def step_backward(self, graph, group_observed):
 		"""Start a backward step in SER algorithm and return the graph to be drawn"""
-		return self.ser.run(g=graph, is_forward=False)
+		return self.ser.run(g=graph, is_forward=False, go=group_observed)
 
-	def step_forward(self, graph):
+	def step_forward(self, graph, group_observed):
 		"""Start a forward step in SER algorithm and return the graph to be drawn"""
-		return self.ser.run(g=graph, is_forward=True)
+		return self.ser.run(g=graph, is_forward=True, go=group_observed)
 
 	def reset(self, graph):
 		"""Reset the SER algorithm for the initial state and return the graph to be drawn"""
@@ -73,11 +73,32 @@ class CController():
 		"""Use object from class SaveData to write connections specifications of each species to JSON file"""
 		self.sd.save_connections(data=data)
 
-	def random_infect_specie(self, graph):
-		self.ser.random_infect_specie(graph=graph)
+	def random_infect_specie(self, graph, group):
+		"""
+		Choose a vertex randomly and change it state to infected for the selected Tc group
+		:param graph: Graph use created for the simulation
+		:type graph: graph_tool.Graph
+		:param group: Tc group selected by the user
+		:type group: str
+		:return: None
+		:rtype: None
+		"""
+		self.ser.random_infect_specie(graph=graph, group=group)
 
 	def get_available_groups(self):
+		"""
+		Verify what groups of Tc is used by the graph model and specified on configuration files
+		:return: List of strings with all Tc groups that can infect the animals on model
+		:rtype: list
+		"""
 		return self.env_graph.get_groups()
 
 	def update_color_state(self, group):
+		"""
+		Update the colors of the graph to represent the species state accordingly to the Tc group selected by the user
+		:param group: Tc group selected using the group combobox
+		:type group: str
+		:return: None
+		:rtype: None
+		"""
 		self.env_graph.upd_state(group)

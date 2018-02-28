@@ -14,7 +14,7 @@ class CSER:
 	def get_iterations_number(self):
 		return self.iterations
 
-	def run(self, g, is_forward):
+	def run(self, g, is_forward, go):
 		"""Verify if is a forward or backward step and revert the edges accordingly to each movement"""
 		if is_forward:
 			self.concurrency_measure(g)
@@ -25,7 +25,7 @@ class CSER:
 			self.iterations -= 1
 
 		self.revert_edge(graph=g, is_forward=is_forward)
-		self.spread_infection(graph=g, is_forward=is_forward)
+		self.spread_infection(graph=g, is_forward=is_forward, group_observed=go)
 		return g
 
 	def reset(self, g):
@@ -75,18 +75,34 @@ class CSER:
 				# graph.edge_properties["contaminationCriteria"] = eprop_criterio
 				graph.remove_edge(old_edge)
 
-	def random_infect_specie(self, graph):
+	def random_infect_specie(self, graph, group):
 		"""
 		Infect random species inserted on simulation graph by changing it's state.
+
+		:param graph: Graph that handle the species on simulation
+		:type graph: graph_tool.Graph
+		:param group: Tc group selected on the combobox by user
+		:type group: str
 		:return: None
 		:rtype: None
 		"""
-		self.sm.random_infect(g=graph)
+		self.sm.random_infect(g=graph, grp=group)
 
-	def spread_infection(self, graph, is_forward):
+	def spread_infection(self, graph, is_forward, group_observed):
+		"""
+		Spread the infection from source vertices to their neighbors after revert the edges using SER algorithm
+		:param graph: Graph that handle the species on simulation
+		:type graph: graph_tool.Graph
+		:param is_forward: Define if the simulation is running a step forward or backward
+		:type is_forward: bool
+		:return: None
+		:rtype: None
+		"""
 		for source in self.sinks:  # After revert edges the sinks become sources
-			for index in range(0, len(graph.vertex_properties.state[source])):
+			count = len(graph.vertex_properties.group[source])
+			for index in range(0, count):
 				self.sm.infect(graph=graph,
+				               group_observed=group_observed,
 				               index=index,
 				               source=source,
 				               is_forward=is_forward,
