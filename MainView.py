@@ -362,6 +362,7 @@ class CMainWindow(Gtk.Window):
 	def reset(self, widget):
 		"""Reset the SER simulation"""
 		if not self.is_running:
+			# TODO: fix error of missing parameter
 			self.graph = self.ctrl.reset(self.graph)
 			self.redraw()
 
