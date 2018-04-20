@@ -19,9 +19,9 @@ class CEnvironmentGraph():
         self.connections = connections
         self.w_width = 0
         self.w_height = 0
-        self.max_vertex = 5000
+        self.max_vertex = 1000
         self.v_total = 0
-        self.pixel_step = 15
+        self.pixel_step = 25
 
         self.names = []
         self.v_pos = []
@@ -125,19 +125,19 @@ class CEnvironmentGraph():
             if v_count < self.max_vertex:
                 for column in range(x_min, x_max, self.pixel_step):
                     # print(self.is_inside(coords, len(coords) - 1, list([column, row])))
-                    if self.is_inside(coords, len(coords) - 1, list([column, row])) == 1:
-                        if v_count < self.max_vertex and [column, row] not in self.v_pos:
-                            self.v_pos.append([(column * self.scale_xy) + offset[0],
-                                               (row * self.scale_xy) + offset[1]])
-
-                            v_count += 1
-                    # if x_min <= column <= x_max and y_min <= row <= y_max:
+                    # if self.is_inside(coords, len(coords) - 1, list([column, row])) == 1:
                     #     if v_count < self.max_vertex and [column, row] not in self.v_pos:
                     #         self.v_pos.append([(column * self.scale_xy) + offset[0],
                     #                            (row * self.scale_xy) + offset[1]])
-                    #         # self.v_pos.append([column, row])
-                    #         # print("Coordinates:", column, row)
+                    #
                     #         v_count += 1
+                    if x_min <= column <= x_max and y_min <= row <= y_max:
+                        if v_count < self.max_vertex and [column, row] not in self.v_pos:
+                            self.v_pos.append([(column * self.scale_xy) + offset[0],
+                                               (row * self.scale_xy) + offset[1]])
+                            # self.v_pos.append([column, row])
+                            # print("Coordinates:", column, row)
+                            v_count += 1
                         else:
                             break
             else:

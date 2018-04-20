@@ -28,10 +28,10 @@ class CSER:
 		self.spread_infection(graph=g, is_forward=is_forward, group_observed=go)
 		return g
 
-	def reset(self, g):
+	def reset(self, g, go):
 		"""Runs the SER algorithm backwards until it reaches the initial state"""
 		while self.iterations:
-			g = self.run(g=g, is_forward=False)
+			g = self.run(g=g, is_forward=False, go=go)
 		return g
 
 	def save_vertex_state(self, graph):

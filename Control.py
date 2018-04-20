@@ -43,9 +43,9 @@ class CController():
 		"""Start a forward step in SER algorithm and return the graph to be drawn"""
 		return self.ser.run(g=graph, is_forward=True, go=group_observed)
 
-	def reset(self, graph):
+	def reset(self, graph, group_observed):
 		"""Reset the SER algorithm for the initial state and return the graph to be drawn"""
-		return self.ser.reset(g=graph)
+		return self.ser.reset(g=graph, go=group_observed)
 
 	def get_spread_models(self):
 		"""Use object from class LoadData to access configuration JSON file and retrieve the spread models"""

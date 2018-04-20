@@ -362,8 +362,8 @@ class CMainWindow(Gtk.Window):
 	def reset(self, widget):
 		"""Reset the SER simulation"""
 		if not self.is_running:
-			# TODO: fix error of missing parameter
-			self.graph = self.ctrl.reset(self.graph)
+			self.graph = self.ctrl.reset(graph=self.graph,
+			                             group_observed=self.group_combo.get_active_text())
 			self.redraw()
 
 	def update_species(self, widget):
