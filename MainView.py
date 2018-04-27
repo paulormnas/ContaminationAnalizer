@@ -25,13 +25,16 @@ class CMainWindow(Gtk.Window):
         self.is_running = False # Attribute to control thread activity
 
         # Program main window.
-        Gtk.Window.__init__(self, title="CSA") # CSA - Contamination Spreading Analyse
+        Gtk.Window.__init__(self, title="CSA") # CSA - Contamination Spreading Analyser
         # Get screen size and resize the program window to fill the screen.
         self.set_icon_from_file("icons/vertex.png")
         self.screen = self.get_screen()
         self.set_default_size(self.screen.get_width(), self.screen.get_height())
+
+        # Events handled
         self.connect("key-press-event", self.key_press_event)
 
+        # Create other elements of the interface
         self.add_main_box()
         self.add_navigation_bar()
         self.add_horizontal_pane()
@@ -260,8 +263,9 @@ class CMainWindow(Gtk.Window):
                                                                     bg_image=self.sf    #Only shapefiles are accepted
                                                                     )
         self.graph_widget.connect("size_allocate", self.size_allocate)
+        self.graph_widget.connect("button-release-event", self.button_release_event)
         self.page_environment.add_overlay(self.graph_widget)
-        self.page_environment.set_overlay_pass_through(self.graph_widget, True)
+        # self.page_environment.set_overlay_pass_through(self.graph_widget, True)
         # self.page_environment.add(Gtk.Label('Environment simulation page'))
         self.nb.append_page(self.page_environment, Gtk.Label('Environment'))
 
@@ -390,3 +394,13 @@ class CMainWindow(Gtk.Window):
                                        group=self.group_combo.get_active_text())
         self.graph_widget.regenerate_surface(reset=True)
         self.graph_widget.queue_draw()
+
+    def button_release_event(self, widget, event):
+        v = self.graph_widget.get_selected_vertex()
+        props = {}
+        if isinstance(v, graph_tool.Vertex):
+            props["species"] = self.graph.vertex_properties.species[v]
+            props["spread_model"] = self.graph.vertex_properties.spread_model[v]
+            props["group"] = self.graph.vertex_properties.group[v]
+            props["habitat"] = self.graph.vertex_properties.habitat[v]
+            props["state"] = self.graph.vertex_properties.state[v]

@@ -375,6 +375,9 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
         else:
             self.bg_image = None
 
+    def get_selected_vertex(self):
+        return self.picked
+
     def realize(self, da):
         self.widget_pos_x, self.widget_pos_y = Gtk.Widget.translate_coordinates(self,
                                                                                 Gtk.Widget.get_toplevel(self),
@@ -1041,6 +1044,36 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
                     self.picked = v
                     self.selected[v] = True
 
+    def key_press_event(self, widget, event):
+        r"""Handle key press."""
+
+        if self.is_zooming or self.is_rotating:
+            return
+
+        #print event.keyval
+        if event.keyval == ord('r'):
+            self.fit_to_window()
+            self.regenerate_surface(reset=True)
+            self.queue_draw()
+        elif event.keyval == ord('s'):
+            self.reset_layout()
+        elif event.keyval == ord('a'):
+            self.apply_transform()
+        elif event.keyval == ord('p'):
+            if self.picked == False:
+                self.init_picked()
+            else:
+                self.picked = False
+                self.selected.fa = False
+                self.vertex_matrix = None
+                self.queue_draw()
+        elif event.keyval == ord('z'):
+            if isinstance(self.picked, PropertyMap):
+                u = GraphView(self.g, vfilt=self.picked)
+                self.fit_to_window(g=u)
+                self.regenerate_surface(reset=True)
+                self.queue_draw()
+
     def scroll_event(self, widget, event):
         r"""Handle scrolling."""
 
@@ -1144,36 +1177,6 @@ class GraphWidgetWithBackImage(Gtk.DrawingArea):
                 self.moved_picked = True
 
         self.queue_draw()
-
-    def key_press_event(self, widget, event):
-        r"""Handle key press."""
-
-        if self.is_zooming or self.is_rotating:
-            return
-
-        #print event.keyval
-        if event.keyval == ord('r'):
-            self.fit_to_window()
-            self.regenerate_surface(reset=True)
-            self.queue_draw()
-        elif event.keyval == ord('s'):
-            self.reset_layout()
-        elif event.keyval == ord('a'):
-            self.apply_transform()
-        elif event.keyval == ord('p'):
-            if self.picked == False:
-                self.init_picked()
-            else:
-                self.picked = False
-                self.selected.fa = False
-                self.vertex_matrix = None
-                self.queue_draw()
-        elif event.keyval == ord('z'):
-            if isinstance(self.picked, PropertyMap):
-                u = GraphView(self.g, vfilt=self.picked)
-                self.fit_to_window(g=u)
-                self.regenerate_surface(reset=True)
-                self.queue_draw()
 
     def key_release_event(self, widget, event):
         r"""Handle release event."""
