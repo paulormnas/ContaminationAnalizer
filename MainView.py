@@ -209,29 +209,6 @@ class CMainWindow(Gtk.Window):
         row = Gtk.ListBoxRow()
         row.add(exp)
         self.listbox.add(row)
-
-        # animals = self.ctrl.get_species()
-        # for a in animals:
-        #     exp = Gtk.Expander()
-        #     exp.set_label_widget(self.project_view_item_label(label=[a["species"]],
-        #                                                       icon="vertex"))
-        #
-        #     spread_models = "\t\tSpread Model: "
-        #     for sm in a["spread_model"]:
-        #         spread_models = spread_models + str(sm) + " "
-        #
-        #     group = "\t\tTc Group: "
-        #     for g in a["group"]:
-        #         group = group + str(g) + " "
-        #
-        #     habitat = "\t\tHabitat: "
-        #     for h in a["habitat"]:
-        #         habitat = habitat + str(h) + " "
-        #     exp.add(self.project_view_item_label(label=[spread_models, group, habitat]))
-        #
-        #     row = Gtk.ListBoxRow()
-        #     row.add(exp)
-        #     self.listbox.add(row)
         self.listbox.show_all()
 
     def project_view_item_label(self, label=None, icon=None):
