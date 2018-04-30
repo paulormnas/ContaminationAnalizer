@@ -22,8 +22,8 @@ class CMainWindow(Gtk.Window):
         self.ctrl.set_shapefile(self.sf)
         self.graph = self.ctrl.get_graph()
         self.graph_widget = None
-        self.is_running = False # Attribute to control thread activity
-
+        self.is_running = False  # Attribute to control thread activity
+        
         # Program main window.
         Gtk.Window.__init__(self, title="CSA") # CSA - Contamination Spreading Analyser
         # Get screen size and resize the program window to fill the screen.
@@ -186,41 +186,53 @@ class CMainWindow(Gtk.Window):
         hb.pack_start(project_hb_box, False, False, 0)
 
         # Add the ListBox with project itens information
-        listbox = Gtk.ListBox()
-        listbox.set_selection_mode(Gtk.SelectionMode.NONE)
-        self.project_view_box.pack_end(listbox, True, True, 0)
+        self.listbox = Gtk.ListBox()
+        self.listbox.set_selection_mode(Gtk.SelectionMode.NONE)
+        self.project_view_box.pack_end(self.listbox, True, True, 0)
 
-        # for name in self.graph.vertex_properties["species"]:
-        # 	exp = Gtk.Expander()
-        # 	exp.set_label_widget(self.project_view_item_label(label=[name],
-        # 	                                                  icon="vertex"))
-        # 	row = Gtk.ListBoxRow()
-        # 	row.add(exp)
-        # 	listbox.add(row)
-        # # animals = self.ctrl.get_animals()
-        # #
-        # # for a in animals:
-        # # 	exp = Gtk.Expander()
-        # # 	exp.set_label_widget(self.project_view_item_label(label=[a["species"]],
-        # # 	                                                  icon="vertex"))
-        # #
-        # # 	spread_models = "\t\tSpread Model: "
-        # # 	for sm in a["spread_model"]:
-        # # 		spread_models = spread_models + str(sm) + " "
-        # #
-        # # 	group = "\t\tTc Group: "
-        # # 	for g in a["group"]:
-        # # 		group = group + str(g) + " "
-        # #
-        # # 	habitat = "\t\tHabitat: "
-        # # 	for h in a["habitat"]:
-        # # 		habitat = habitat + str(h) + " "
-        # # 	exp.add(self.project_view_item_label(label=[spread_models, group, habitat]))
-        # #
-        # # 	row = Gtk.ListBoxRow()
-        # # 	row.add(exp)
-        # # 	listbox.add(row)
-        # listbox.show_all()
+        exp = Gtk.Expander()
+        exp.set_label_widget(self.project_view_item_label(label=["Selected Vertex"],
+                                                          icon="vertex"))
+        row = Gtk.ListBoxRow()
+        row.add(exp)
+        self.listbox.add(row)
+
+        species = "\tSpecies: "
+        spread_models = "\tSpread Model: "
+        group = "\tTc Group: "
+        habitat = "\tHabitat: "
+        exp.add(self.project_view_item_label(label=[species, spread_models, group, habitat]))
+
+        exp = Gtk.Expander()
+        exp.set_label_widget(self.project_view_item_label(label=["Neighbors"],
+                                                          icon="connections"))
+        row = Gtk.ListBoxRow()
+        row.add(exp)
+        self.listbox.add(row)
+
+        # animals = self.ctrl.get_species()
+        # for a in animals:
+        #     exp = Gtk.Expander()
+        #     exp.set_label_widget(self.project_view_item_label(label=[a["species"]],
+        #                                                       icon="vertex"))
+        #
+        #     spread_models = "\t\tSpread Model: "
+        #     for sm in a["spread_model"]:
+        #         spread_models = spread_models + str(sm) + " "
+        #
+        #     group = "\t\tTc Group: "
+        #     for g in a["group"]:
+        #         group = group + str(g) + " "
+        #
+        #     habitat = "\t\tHabitat: "
+        #     for h in a["habitat"]:
+        #         habitat = habitat + str(h) + " "
+        #     exp.add(self.project_view_item_label(label=[spread_models, group, habitat]))
+        #
+        #     row = Gtk.ListBoxRow()
+        #     row.add(exp)
+        #     self.listbox.add(row)
+        self.listbox.show_all()
 
     def project_view_item_label(self, label=None, icon=None):
         """This function is used to construct the label of the items in the project view"""
@@ -234,8 +246,8 @@ class CMainWindow(Gtk.Window):
                                spacing=6)
             item_label = Gtk.Label()
             item_label.set_text(l)
-            if len(label) > 1:
-                item_label.set_markup("""<span foreground="blue">""" + l + "</span>")
+            # if len(label) > 1:
+            #     item_label.set_markup("""<span foreground="blue">""" + l + "</span>")
 
             if icon is not None:
                 item_icon = Gtk.Image.new_from_file("icons/" + icon + ".png")
@@ -397,10 +409,62 @@ class CMainWindow(Gtk.Window):
 
     def button_release_event(self, widget, event):
         v = self.graph_widget.get_selected_vertex()
-        props = {}
+        selected_vertex_props = {}  # Dictionary with properties of the vertex selected by the user
         if isinstance(v, graph_tool.Vertex):
-            props["species"] = self.graph.vertex_properties.species[v]
-            props["spread_model"] = self.graph.vertex_properties.spread_model[v]
-            props["group"] = self.graph.vertex_properties.group[v]
-            props["habitat"] = self.graph.vertex_properties.habitat[v]
-            props["state"] = self.graph.vertex_properties.state[v]
+            selected_vertex_props["species"] = self.graph.vertex_properties.species[v]
+            selected_vertex_props["spread_model"] = self.graph.vertex_properties.spread_model[v]
+            selected_vertex_props["group"] = self.graph.vertex_properties.group[v]
+            selected_vertex_props["habitat"] = self.graph.vertex_properties.habitat[v]
+            selected_vertex_props["state"] = self.graph.vertex_properties.state[v]
+            neighbor_dct = {}
+            for n in self.graph.get_in_neighbors(v):
+                self.add_especies_to_dct(dct=neighbor_dct, v=n)
+            for n in self.graph.get_out_neighbors(v):
+                self.add_especies_to_dct(dct=neighbor_dct, v=n)
+            selected_vertex_props["neighbors"] = neighbor_dct
+            self.update_listbox(props=selected_vertex_props)
+
+    def add_especies_to_dct(self, dct, v):
+        species = self.graph.vertex_properties.species[v]
+        if species in dct.keys():
+            dct[species] = dct[species] + 1
+        else:
+            dct[species] = 1
+
+    def update_listbox(self, props):
+        for child in self.listbox.get_children():
+            self.listbox.remove(child)
+
+        exp = Gtk.Expander()
+        exp.set_label_widget(self.project_view_item_label(label=["Selected Vertex"],
+                                                          icon="vertex"))
+        row = Gtk.ListBoxRow()
+        row.add(exp)
+        self.listbox.add(row)
+
+        species = "\tSpecies: " + props["species"]
+        spread_models = "\tSpread Model: "
+        for sm in props["spread_model"]:
+            spread_models = spread_models + str(sm) + " "
+
+        group = "\tTc Group: "
+        for g in props["group"]:
+            group = group + str(g) + " "
+
+        habitat = "\tHabitat: "
+        for h in props["habitat"]:
+            habitat = habitat + str(h) + " "
+        exp.add(self.project_view_item_label(label=[species, spread_models, group, habitat]))
+
+        exp = Gtk.Expander()
+        exp.set_label_widget(self.project_view_item_label(label=["Neighbors"],
+                                                          icon="connections"))
+        label_lst = []
+        neighbors_lst = props["neighbors"]
+        for n in neighbors_lst.keys():
+            label_lst.append(n + ": " + str(neighbors_lst[n]))
+        exp.add(self.project_view_item_label(label=label_lst))
+        row = Gtk.ListBoxRow()
+        row.add(exp)
+        self.listbox.add(row)
+        self.listbox.show_all()
