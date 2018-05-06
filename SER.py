@@ -26,7 +26,6 @@ class CSER:
             self.identify_last_sinks(g)
             self.iterations -= 1
 
-        print("States:", self.vertex_states)
         self.revert_edge(graph=g, is_forward=is_forward)
         self.spread_infection(graph=g, is_forward=is_forward, group_observed=go)
         return g
@@ -98,6 +97,8 @@ class CSER:
         :type graph: graph_tool.Graph
         :param is_forward: Define if the simulation is running a step forward or backward
         :type is_forward: bool
+        :param group_observed: Tc group that is being observed by the user
+        :type str
         :return: None
         :rtype: None
         """

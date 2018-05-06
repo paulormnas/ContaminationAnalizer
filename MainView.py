@@ -154,7 +154,7 @@ class CMainWindow(Gtk.Window):
         self.vert_box.pack_start(self.horizontal_pane, True, True, 0)
 
     def add_project_view(self):
-        """Create a porject view composed by a header and a ListBox that show the structure of itens present
+        """Create a project view composed by a header and a ListBox that show the structure of items present
         in the project"""
         self.project_view_box = Gtk.Box(homogeneous=False,
                                         orientation=Gtk.Orientation.VERTICAL)
@@ -171,69 +171,91 @@ class CMainWindow(Gtk.Window):
         hb.pack_end(button, False, True, 0)
         self.project_view_box.pack_start(hb, False, True, 0)
 
-        # A Box container that is set inside the NavigationBar to handle the buttons
+        # A Box container that is set inside the NavigationBar to handle decorations
         project_hb_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         Gtk.StyleContext.add_class(project_hb_box.get_style_context(), "linked")
-
-        button = Gtk.Button()
-        button.add(Gtk.Arrow(Gtk.ArrowType.LEFT, Gtk.ShadowType.NONE))
-        project_hb_box.add(button)
-
-        button = Gtk.Button()
-        button.add(Gtk.Arrow(Gtk.ArrowType.RIGHT, Gtk.ShadowType.NONE))
-        project_hb_box.add(button)
-
+        icon = Gtk.Image.new_from_file("icons/connections.png")
+        project_hb_box.add(icon)
+        label = Gtk.Label(" Project")
+        project_hb_box.add(label)
         hb.pack_start(project_hb_box, False, False, 0)
 
-        # Add the ListBox with project itens information
+        # Add the ListBox with project items information
         self.listbox = Gtk.ListBox()
         self.listbox.set_selection_mode(Gtk.SelectionMode.NONE)
-        self.project_view_box.pack_end(self.listbox, True, True, 0)
+        self.project_view_box.pack_end(self.listbox, True, True, 6)
 
+        # Expander for vertex properties
         exp = Gtk.Expander()
-        exp.set_label_widget(self.project_view_item_label(label=["Selected Vertex"],
-                                                          icon="vertex"))
+        exp.set_label_widget(self.project_view_expander_label(label="Selected Vertex", icon="vertex"))
         row = Gtk.ListBoxRow()
         row.add(exp)
         self.listbox.add(row)
+        props = {"Species": "", "Spread Model": "", "Tc Group": "", "Habitat": ""}
+        exp.add(self.project_view_expander_description(dct=props))
 
-        species = "\tSpecies: "
-        spread_models = "\tSpread Model: "
-        group = "\tTc Group: "
-        habitat = "\tHabitat: "
-        exp.add(self.project_view_item_label(label=[species, spread_models, group, habitat]))
-
+        # Expander for vertex connections
         exp = Gtk.Expander()
-        exp.set_label_widget(self.project_view_item_label(label=["Neighbors"],
-                                                          icon="connections"))
+        exp.set_label_widget(self.project_view_expander_label(label="Connections", icon="connections"))
         row = Gtk.ListBoxRow()
         row.add(exp)
         self.listbox.add(row)
         self.listbox.show_all()
 
-    def project_view_item_label(self, label=None, icon=None):
+    @staticmethod
+    def project_view_expander_label(label=None, icon=None):
         """This function is used to construct the label of the items in the project view"""
-        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL,
-                          homogeneous=False,
-                          spacing=6)
+        vbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,
+                       homogeneous=False,
+                       spacing=0)
 
-        for l in label:
-            item_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,
-                               homogeneous=False,
-                               spacing=6)
-            item_label = Gtk.Label()
-            item_label.set_text(l)
-            # if len(label) > 1:
-            #     item_label.set_markup("""<span foreground="blue">""" + l + "</span>")
-
-            if icon is not None:
-                item_icon = Gtk.Image.new_from_file("icons/" + icon + ".png")
-                item_box.add(item_icon)
-
-            item_box.pack_start(item_label, False, False, 6)
-            vbox.add(item_box)
-
+        if icon is not None:
+            item_icon = Gtk.Image.new_from_file("icons/" + icon + ".png")
+            vbox.add(item_icon)
+        item_label = Gtk.Label()
+        item_label.set_text(label)
+        vbox.pack_end(item_label, False, False, 6)
         return vbox
+
+    @staticmethod
+    def project_view_expander_description(dct=None):
+        """This function is used to construct the descriptions of the items in the project view with data
+        of the vertex selected by the user"""
+        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,
+                       homogeneous=False,
+                       spacing=6)
+        spc_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL,
+                       homogeneous=False,
+                       spacing=4)
+        exp_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL,
+                       homogeneous=False,
+                       spacing=4)
+        hbox.pack_start(spc_box, False, False, 6)
+        hbox.pack_start(exp_box, False, False, 6)
+
+        for k in dct.keys():
+            exp_description = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,
+                                      homogeneous=False,
+                                      spacing=6)
+            description_spc_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL,
+                                          homogeneous=False,
+                                          spacing=6)
+            exp_description.pack_start(description_spc_box, False, False, 6)
+            if isinstance(dct[k], int):
+                item_description = Gtk.Label()
+                item_description.set_markup(k + ":\t" + """<span foreground="blue">""" + str(dct[k]) + "</span>")
+                exp_description.pack_start(item_description, False, False, 6)
+                exp_box.add(exp_description)
+            elif isinstance(dct[k], str):
+                exp = Gtk.Expander()
+                exp.set_label_widget(Gtk.Label(k))
+                exp_description.pack_start(description_spc_box, False, False, 6)
+                item_description = Gtk.Label()
+                item_description.set_markup("""<span foreground="blue">""" + dct[k] + "</span>")
+                exp_description.pack_start(item_description, False, False, 6)
+                exp.add(exp_description)
+                exp_box.add(exp)
+        return hbox
 
     def add_notebook(self):
         self.nb = Gtk.Notebook()
@@ -385,6 +407,7 @@ class CMainWindow(Gtk.Window):
         self.graph_widget.queue_draw()
 
     def button_release_event(self, widget, event):
+        """ Callback function that handle the mouse button release when the user select a graph's vertex"""
         v = self.graph_widget.get_selected_vertex()
         selected_vertex_props = {}  # Dictionary with properties of the vertex selected by the user
         if isinstance(v, graph_tool.Vertex):
@@ -409,39 +432,49 @@ class CMainWindow(Gtk.Window):
             dct[species] = 1
 
     def update_listbox(self, props):
+        """
+        Update the Listbox of project view when the user select a vertex.
+        :param props: Dictionary that contains the properties of graph's vertex
+        :type props: dict
+        :return: None
+        :rtype: None
+        """
         for child in self.listbox.get_children():
             self.listbox.remove(child)
 
         exp = Gtk.Expander()
-        exp.set_label_widget(self.project_view_item_label(label=["Selected Vertex"],
-                                                          icon="vertex"))
+        exp.set_label_widget(self.project_view_expander_label(label="Selected Vertex", icon="vertex"))
         row = Gtk.ListBoxRow()
         row.add(exp)
         self.listbox.add(row)
 
-        species = "\tSpecies: " + props["species"]
-        spread_models = "\tSpread Model: "
-        for sm in props["spread_model"]:
-            spread_models = spread_models + str(sm) + " "
-
-        group = "\tTc Group: "
-        for g in props["group"]:
-            group = group + str(g) + " "
-
-        habitat = "\tHabitat: "
-        for h in props["habitat"]:
-            habitat = habitat + str(h) + " "
-        exp.add(self.project_view_item_label(label=[species, spread_models, group, habitat]))
+        dct_to_print = {"Species": props["species"],
+                        "Spread Model": self.string_construct(lst=list(props["spread_model"])),
+                        "Tc Group": self.string_construct(lst=list(props["group"])),
+                        "Habitat": self.string_construct(lst=list(props["habitat"]))}
+        exp.add(self.project_view_expander_description(dct=dct_to_print))
 
         exp = Gtk.Expander()
-        exp.set_label_widget(self.project_view_item_label(label=["Neighbors"],
-                                                          icon="connections"))
-        label_lst = []
-        neighbors_lst = props["neighbors"]
-        for n in neighbors_lst.keys():
-            label_lst.append(n + ": " + str(neighbors_lst[n]))
-        exp.add(self.project_view_item_label(label=label_lst))
+        exp.set_label_widget(self.project_view_expander_label(label="Connections", icon="connections"))
+        exp.add(self.project_view_expander_description(dct=props["neighbors"]))
         row = Gtk.ListBoxRow()
         row.add(exp)
         self.listbox.add(row)
         self.listbox.show_all()
+
+    @staticmethod
+    def string_construct(lst):
+        """
+        Build a string with the information passed through the list
+        :param lst: List of string with data to be concatenated
+        :type lst: list
+        :return: String with the adapted information to be shown as a vertical list
+        :rtype: str
+        """
+        final_str = ""
+        for obj in lst:
+            if lst.index(obj) == (len(lst) - 1):
+                final_str = final_str + str(obj)
+            else:
+                final_str = final_str + str(obj) + "\r"
+        return final_str

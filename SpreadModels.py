@@ -25,15 +25,14 @@ class CSIR:
 
     def random_infect(self, g, grp):
         """
-		Choose a random vertex to change it's state to infected and update it's properties
-		:param g: The graph used o simulation
-		:type g: graph_tool.Graph
-		:param grp: The graph used o simulation
-		:type grp: str
-		:return: None
-		:rtype: None
-		"""
-
+        Choose a random vertex to change it's state to infected and update it's properties
+        :param g: The graph used o simulation
+        :type g: graph_tool.Graph
+        :param grp: The graph used o simulation
+        :type grp: str
+        :return: None
+        :rtype: None
+        """
         trials = 0
         while trials <= g.num_vertices():
             v_index = randint(0, g.num_vertices() - 1)
@@ -86,7 +85,6 @@ class CSIR:
                                  v_index=n_index,
                                  is_observed=is_observed)
         else:
-            #  TODO: fix step backward infection
             neighbors_list = graph.get_in_neighbors(source)
             for n in neighbors_list:
                 if group in graph.vertex_properties.group[n]:
