@@ -249,7 +249,6 @@ class CMainWindow(Gtk.Window):
             elif isinstance(dct[k], str):
                 exp = Gtk.Expander()
                 exp.set_label_widget(Gtk.Label(k))
-                exp_description.pack_start(description_spc_box, False, False, 6)
                 item_description = Gtk.Label()
                 item_description.set_markup("""<span foreground="blue">""" + dct[k] + "</span>")
                 exp_description.pack_start(item_description, False, False, 6)
