@@ -21,10 +21,10 @@ class CEnvironmentGraph():
         self.w_height = 0
         self.max_vertex = 1000
         self.v_total = 0
-        self.pixel_step = 25
+        self.pixel_step = 15
 
         self.names = []
-        self.v_pos = []
+        self.v_pos = {}
         self.g.vertex_properties.position = self.g.new_vertex_property("vector<double>")
         self.g.vertex_properties.species = self.g.new_vertex_property("string")
         self.g.vertex_properties.spread_model = self.g.new_vertex_property("vector<string>")
@@ -67,25 +67,26 @@ class CEnvironmentGraph():
 
         v_count = 0
         # for i in range(len(self.shapes)):
-        for i in range(86, 87):
+        for i in range(91, 92):
             print("Shape:", i)
             print("Parts:", self.shapes[i].parts)
             species_list = self.habitat_of(i)
-            species_number = len(species_list)
             progress = int(100 * i / len(self.shapes))
             print("Progress: " + str(progress) + "%")
-            if species_number > 0:
+            if len(species_list) > 0:
                 if v_count < self.max_vertex:
                     if len(self.shapes[i].parts) > 0:
                         for n in range(1, len(self.shapes[i].parts)):
                             coords = self.shapes[i].points[self.shapes[i].parts[n-1]: self.shapes[i].parts[n]]
                             v_count = self.test_coord(coords=coords,
                                                       v_count=v_count,
-                                                      offset=offset)
+                                                      offset=offset,
+                                                      allowed_species=species_list)
                     else:
                         v_count = self.test_coord(coords=self.shapes[i].points,
                                                   v_count=v_count,
-                                                  offset=offset)
+                                                  offset=offset,
+                                                  allowed_species=species_list)
                 else:
                     break
         print("Vertices total:", v_count)
@@ -93,56 +94,6 @@ class CEnvironmentGraph():
             self.v_total = v_count
         else:
             self.v_total = v_count - 1
-
-    def test_coord(self, coords, v_count, offset):
-        x_max, x_min, y_max, y_min = coords[0][0], coords[0][0], coords[0][1], coords[0][1]
-        # Find maximum and minimum value of shapes coordinates
-        for j in range(len(coords)):
-            if coords[j][0] > x_max:
-                x_max = coords[j][0]
-            if coords[j][0] < x_min:
-                x_min = coords[j][0]
-
-            if coords[j][1] > y_max:
-                y_max = coords[j][1]
-            if coords[j][1] < y_min:
-                y_min = coords[j][1]
-
-        # Normalize maximum and minimum values of shape coordinates and convert to widget dimensions
-        x_max_norm = (x_max - self.x1) / (self.x2 - self.x1)
-        y_max_norm = (y_max - self.y1) / (self.y2 - self.y1)
-        x_min_norm = (x_min - self.x1) / (self.x2 - self.x1)
-        y_min_norm = (y_min - self.y1) / (self.y2 - self.y1)
-
-        # Convert to pixel coordinates
-        x_max = int(x_max_norm * self.w_width / 4)
-        x_min = int(x_min_norm * self.w_width / 4)
-        y_min = int((self.w_height - (y_max_norm * self.w_height)) / 3)
-        y_max = int((self.w_height - (y_min_norm * self.w_height)) / 3)
-
-        # Set coordinates where the vertices should be drawn
-        for row in range(y_min, y_max, self.pixel_step):
-            if v_count < self.max_vertex:
-                for column in range(x_min, x_max, self.pixel_step):
-                    # print(self.is_inside(coords, len(coords) - 1, list([column, row])))
-                    # if self.is_inside(coords, len(coords) - 1, list([column, row])) == 1:
-                    #     if v_count < self.max_vertex and [column, row] not in self.v_pos:
-                    #         self.v_pos.append([(column * self.scale_xy) + offset[0],
-                    #                            (row * self.scale_xy) + offset[1]])
-                    #
-                    #         v_count += 1
-                    if x_min <= column <= x_max and y_min <= row <= y_max:
-                        if v_count < self.max_vertex and [column, row] not in self.v_pos:
-                            self.v_pos.append([(column * self.scale_xy) + offset[0],
-                                               (row * self.scale_xy) + offset[1]])
-                            # self.v_pos.append([column, row])
-                            # print("Coordinates:", column, row)
-                            v_count += 1
-                        else:
-                            break
-            else:
-                break
-        return v_count
 
     def habitat_of(self, shape_index):
         """
@@ -159,6 +110,75 @@ class CEnvironmentGraph():
             if records[shape_index][6] in s["habitat"]:
                 species_list.append(s["species"])
         return species_list
+
+    def test_coord(self, coords, v_count, offset, allowed_species):
+        x_max, x_min, y_max, y_min = coords[0][0], coords[0][0], coords[0][1], coords[0][1]
+        # Find maximum and minimum value of shapes coordinates
+        for j in range(len(coords)):
+            if coords[j][0] > x_max:
+                x_max = coords[j][0]
+            if coords[j][0] < x_min:
+                x_min = coords[j][0]
+
+            if coords[j][1] > y_max:
+                y_max = coords[j][1]
+            if coords[j][1] < y_min:
+                y_min = coords[j][1]
+
+        x_max, y_min, x_min, y_max = self.convert_coords(x1=x_max, y1=y_max, x2=x_min, y2=y_min)
+
+        # Set coordinates where the vertices should be drawn
+        for row in range(y_min, y_max, self.pixel_step):
+            if v_count < self.max_vertex:
+                for column in range(x_min, x_max, self.pixel_step):
+                    # print(self.is_inside(coords, len(coords) - 1, list([column, row])))
+                    if self.is_inside(coords, len(coords) - 1, [column, row]) == 1:
+                        if v_count < self.max_vertex:
+                            self.v_pos[v_count] = {"coords":([(column * self.scale_xy) + offset[0],
+                                                               (row * self.scale_xy) + offset[1]]),
+                                                    "allowed_species":allowed_species}
+
+                            v_count += 1
+                    # if x_min <= column <= x_max and y_min <= row <= y_max:
+                    #     if v_count < self.max_vertex and [column, row] not in self.v_pos:
+                    #         self.v_pos.append([(column * self.scale_xy) + offset[0],
+                    #                            (row * self.scale_xy) + offset[1]])
+                    #         # self.v_pos.append([column, row])
+                    #         # print("Coordinates:", column, row)
+                    #         v_count += 1
+                        else:
+                            break
+            else:
+                break
+        return v_count
+
+    def convert_coords(self, x1, y1, x2, y2):
+        """
+        Function to convert shape coordinates, normally on latitude and longitude accordingly to the reference system
+        adopted, to pixel coordinates.
+        :param x1: x coordinate of first point
+        :type x1: float
+        :param y1: y coordinate of first point
+        :type y1: float
+        :param x2: x coordinate of second point
+        :type x2: float
+        :param y2: y coordinate of second point
+        :type y2: float
+        :return: List of shape coordinates converted to pixel coordinates (all values in this list are integer type)
+        :rtype: list
+        """
+        # Normalize values of shape coordinates and convert to widget dimensions
+        x1 = (x1 - self.x1) / (self.x2 - self.x1)
+        y1 = (y1 - self.y1) / (self.y2 - self.y1)
+        x2 = (x2 - self.x1) / (self.x2 - self.x1)
+        y2 = (y2 - self.y1) / (self.y2 - self.y1)
+
+        # Convert to pixel coordinates
+        x1 = int((x1 * self.w_width) / 4)
+        y1 = int((self.w_height - (y1 * self.w_height)) / 3)
+        x2 = int((x2 * self.w_width) / 4)
+        y2 = int((self.w_height - (y2 * self.w_height)) / 3)
+        return [x1, y1, x2, y2]
 
     @staticmethod
     def on_segment(p, r, q):
@@ -292,16 +312,7 @@ class CEnvironmentGraph():
             p1 = list(polygon[i])
             q1 = list(polygon[next])
 
-            # Normalize values of shape coordinates and convert to widget dimensions
-            p1[0] = (p1[0] - self.x1) / (self.x2 - self.x1)
-            p1[1] = (p1[1] - self.y1) / (self.y2 - self.y1)
-            q1[0] = (q1[0] - self.x1) / (self.x2 - self.x1)
-            q1[1] = (q1[1] - self.y1) / (self.y2 - self.y1)
-
-            p1[0] = int((p1[0] * self.w_width) / 4)
-            p1[1] = int((self.w_height - (p1[1] * self.w_height)) / 3)
-            q1[0] = int((q1[0] * self.w_width) / 4)
-            q1[1] = int((self.w_height - (q1[1] * self.w_height)) / 3)
+            p1[0], p1[1], q1[0], q1[1] = self.convert_coords(x1=p1[0], y1=p1[1], x2=q1[0], y2=q1[1])
 
             # Check if the line segment from 'p' to 'extreme' intersects
             # with the line segment from 'polygon[i]' to 'polygon[next]'
@@ -326,12 +337,15 @@ class CEnvironmentGraph():
         :rtype: None
         """
         self.g.add_vertex(self.v_total)
-        vprop_pos = self.g.new_vertex_property("vector<double>")
 
         # Read the species properties from the JSON file and insert into vertex properties
         for v in self.g.vertices():
-            n = randint(0, len(self.species) - 1)
-            s = self.species[n]
+            s = self.species[0]
+            while True:
+                n = randint(0, len(self.species) - 1)
+                if self.species[n]["species"] in self.v_pos[self.g.vertex_index[v]]["allowed_species"]:
+                    s = self.species[n]
+                    break
             self.g.vertex_properties.species[v] = s["species"]
             self.g.vertex_properties.spread_model[v] = s["spread_model"]
             self.g.vertex_properties.group[v] = s["group"]
@@ -339,11 +353,7 @@ class CEnvironmentGraph():
             self.g.vertex_properties.state[v] = s["state"]
             # Color for susceptible (S) state
             self.g.vertex_properties.state_color[v] = (186 / 255, 172 / 255, 18 / 255, 0.8)
-
-        for count in range(0, self.v_total, 1):
-            vprop_pos[count] = self.v_pos[count]
-
-        self.g.vertex_properties.position = vprop_pos
+            self.g.vertex_properties.position[v] = self.v_pos[self.g.vertex_index[v]]["coords"]
 
     def add_edges(self):
         # Create edges between graph vertices, respecting the species connections and the maximum distance
